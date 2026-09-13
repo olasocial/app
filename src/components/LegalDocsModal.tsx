@@ -19,27 +19,27 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-sky-600" />
-            <h3 className="font-extrabold text-slate-900 text-lg">Centro Legal y de Ayuda</h3>
+            <BookOpen className="w-5 h-5 text-sky-600 shrink-0" />
+            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">Centro Legal y de Ayuda</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+            className="text-slate-400 hover:text-slate-600 font-bold text-lg p-1"
           >
             ✕
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-100 bg-slate-50 px-6 pt-2 gap-2 overflow-x-auto">
+        <div className="flex border-b border-slate-100 bg-slate-50 px-3 sm:px-6 pt-2 gap-1 sm:gap-2 overflow-x-auto no-scrollbar touch-pan-x">
           <button
             onClick={() => setActiveTab('terms')}
-            className={`pb-3 text-xs font-bold transition-colors whitespace-nowrap border-b-2 ${
+            className={`pb-2.5 sm:pb-3 px-2 text-xs font-bold transition-colors whitespace-nowrap border-b-2 shrink-0 ${
               activeTab === 'terms'
                 ? 'border-sky-600 text-sky-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -49,38 +49,38 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`pb-3 text-xs font-bold transition-colors whitespace-nowrap border-b-2 ${
+            className={`pb-2.5 sm:pb-3 px-2 text-xs font-bold transition-colors whitespace-nowrap border-b-2 shrink-0 ${
               activeTab === 'privacy'
                 ? 'border-sky-600 text-sky-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Política de Privacidad
+            Privacidad
           </button>
           <button
             onClick={() => setActiveTab('compliance')}
-            className={`pb-3 text-xs font-bold transition-colors whitespace-nowrap border-b-2 ${
+            className={`pb-2.5 sm:pb-3 px-2 text-xs font-bold transition-colors whitespace-nowrap border-b-2 shrink-0 ${
               activeTab === 'compliance'
                 ? 'border-sky-600 text-sky-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Platform Compliance
+            Cumplimiento
           </button>
           <button
             onClick={() => setActiveTab('guides')}
-            className={`pb-3 text-xs font-bold transition-colors whitespace-nowrap border-b-2 ${
+            className={`pb-2.5 sm:pb-3 px-2 text-xs font-bold transition-colors whitespace-nowrap border-b-2 shrink-0 ${
               activeTab === 'guides'
                 ? 'border-sky-600 text-sky-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Guías y Preguntas Frecuentes
+            Guías & FAQ
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 leading-relaxed">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs text-slate-600 leading-relaxed">
           {activeTab === 'terms' && (
             <div className="space-y-3">
               <h4 className="font-extrabold text-slate-900 text-sm">Términos y Condiciones de OLA SOCIAL (2026)</h4>

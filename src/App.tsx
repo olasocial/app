@@ -8,6 +8,8 @@ import { BattlesView } from './components/BattlesView';
 import { RankingView } from './components/RankingView';
 import { SecurityCenter } from './components/SecurityCenter';
 import { AdminPanel } from './components/AdminPanel';
+import { LevelsAndProgressView } from './components/LevelsAndProgressView';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { DonationsModal } from './components/DonationsModal';
 import { CreateCampaignModal } from './components/CreateCampaignModal';
 import { LegalDocsModal } from './components/LegalDocsModal';
@@ -128,13 +130,15 @@ const MainAppContent: React.FC = () => {
 
         {currentTab === 'ranking' && <RankingView />}
 
+        {currentTab === 'progress' && <LevelsAndProgressView />}
+
         {currentTab === 'security' && <SecurityCenter />}
 
         {currentTab === 'admin' && <AdminPanel />}
       </main>
 
-      {/* Platform Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 bg-white py-8">
+      {/* Platform Footer (with extra padding on mobile for MobileBottomNav) */}
+      <footer className="mt-auto border-t border-slate-200/80 bg-white py-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
@@ -215,6 +219,12 @@ const MainAppContent: React.FC = () => {
       <OnboardingModal
         isOpen={isOnboardingOpen}
         onComplete={() => setIsOnboardingOpen(false)}
+      />
+
+      {/* Mobile Fixed Bottom Navigation Bar for rapid one-handed mobile navigation */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        onSelectTab={setCurrentTab}
       />
     </div>
   );

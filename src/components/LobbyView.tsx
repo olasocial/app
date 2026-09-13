@@ -99,7 +99,8 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
   const handleValidateSubmit = (confirmed: boolean) => {
     if (!selectedTaskToValidate) return;
-    validateHug(selectedTaskToValidate.id, confirmed, validationStars, validationComment);
+    const feedback = validationComment || (confirmed ? `Calificación: ${validationStars} estrellas` : 'Interacción no confirmada');
+    validateHug(selectedTaskToValidate.id, confirmed, feedback);
     setSelectedTaskToValidate(null);
     setValidationComment('');
     setValidationStars(5);
@@ -185,67 +186,69 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
       </div>
 
       {/* Primary Metrics Cards per Prompt Specification */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Card 1: Abrazos Realizados */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-sky-600 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Realizados</span>
-            <div className="w-8 h-8 rounded-full bg-sky-50 flex items-center justify-center">
-              <Heart className="w-4 h-4 text-sky-600" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between text-sky-600 mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Realizados</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-600" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">{user?.hugs_done ?? 0}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Abrazos voluntarios dados</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_done ?? 0}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Abrazos dados</p>
         </div>
 
         {/* Card 2: Abrazos Recibidos */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-teal-600 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Recibidos</span>
-            <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center">
-              <Users className="w-4 h-4 text-teal-600" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between text-teal-600 mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Recibidos</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">{user?.hugs_received ?? 0}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Apoyos declarados hacia ti</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_received ?? 0}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Apoyos hacia ti</p>
         </div>
 
         {/* Card 3: Abrazos Validados */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-emerald-600 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Validados</span>
-            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between text-emerald-600 mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Validados</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">{user?.hugs_verified ?? 0}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Confirmados con éxito</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_verified ?? 0}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Confirmados</p>
         </div>
 
         {/* Card 4: Estrellas */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-amber-500 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Estrellas</span>
-            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between text-amber-500 mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Estrellas</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-400" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">{user?.stars_count ?? 0}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Promedio: {user?.rating_avg || '5.0'} / 5.0</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.stars_count ?? 0}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Prom: {user?.rating_avg || '5.0'}★</p>
         </div>
 
         {/* Card 5: Nivel */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between text-rose-500 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nivel</span>
-            <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
-              <Award className="w-4 h-4 text-rose-500" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow col-span-2 sm:col-span-1 lg:col-span-1">
+          <div className="flex items-center justify-between text-rose-500 mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Nivel</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-slate-900 truncate">
-            {user?.user_level || 'EXPLORADOR'}
+          <div className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 truncate">
+            Nivel {user?.level_number || 1}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Reputación: {user?.reputation ?? 75}%</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">
+            {user?.experience_points || 0} XP • Rep: {user?.reputation_score !== undefined ? user.reputation_score.toFixed(1) : '100.0'}
+          </p>
         </div>
       </div>
 
@@ -328,13 +331,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
           </div>
 
           {/* Platform Filter */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <Filter className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0 touch-pan-x flex-nowrap">
+            <Filter className="w-4 h-4 text-slate-400 shrink-0" />
             <button
               onClick={() => setPlatformFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
                 platformFilter === 'all'
-                  ? 'bg-sky-600 text-white'
+                  ? 'bg-sky-600 text-white shadow-xs'
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}
             >
@@ -344,9 +347,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               <button
                 key={k}
                 onClick={() => setPlatformFilter(k)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
                   platformFilter === k
-                    ? 'bg-sky-600 text-white'
+                    ? 'bg-sky-600 text-white shadow-xs'
                     : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                 }`}
               >
@@ -366,7 +369,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {availableTasks.map((task) => {
               const platformInfo = PLATFORM_REGISTRY[task.platform];
               const isInProgress = task.status === TaskStatus.IN_PROGRESS && task.assigned_user_id === user?.id;
@@ -374,27 +377,27 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               return (
                 <div
                   key={task.id}
-                  className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between group"
+                  className="bg-white rounded-3xl border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between group"
                 >
                   <div>
                     {/* Header with Creator Info & Platform Tag */}
                     <div className="flex items-center justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <img
                           src={task.creator_avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=user'}
                           alt={task.creator_name}
-                          className="w-9 h-9 rounded-full object-cover border border-slate-100"
+                          className="w-9 h-9 rounded-full object-cover border border-slate-100 shrink-0"
                         />
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 truncate max-w-[140px]">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 truncate">
                             {task.creator_name}
                           </div>
-                          <div className="text-[10px] text-slate-400">@{task.target_username}</div>
+                          <div className="text-[10px] text-slate-400 truncate">@{task.target_username}</div>
                         </div>
                       </div>
 
                       <span
-                        className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wider"
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wider shrink-0"
                         style={{ backgroundColor: platformInfo?.color || '#0284c7' }}
                       >
                         {platformInfo?.name || task.platform}
@@ -402,7 +405,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                     </div>
 
                     {/* Title and Description */}
-                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-2">
                       {task.title}
                     </h4>
                     <p className="text-xs text-slate-600 mt-1.5 line-clamp-3 leading-relaxed">
@@ -411,8 +414,8 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
                     {/* Action Type & Compliance Notice */}
                     <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-100">
-                      <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
-                      <span>{task.action_type}</span>
+                      <Heart className="w-3 h-3 text-rose-500 fill-rose-500 shrink-0" />
+                      <span className="truncate">{task.action_type}</span>
                     </div>
                   </div>
 
@@ -422,7 +425,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                       href={task.target_profile_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors p-1"
                     >
                       <span>Ver perfil</span>
                       <ExternalLink className="w-3 h-3" />
@@ -431,14 +434,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                     {isInProgress ? (
                       <button
                         onClick={() => setSelectedTaskToDeclare(task)}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+                        className="px-3.5 py-2 min-h-[38px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors touch-manipulation"
                       >
                         Declarar realizado
                       </button>
                     ) : (
                       <button
                         onClick={() => handleStart(task.id, task.target_profile_url)}
-                        className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition-colors"
+                        className="px-3.5 py-2 min-h-[38px] rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition-colors touch-manipulation"
                       >
                         Dar Abrazo
                       </button>
@@ -453,21 +456,21 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
       {/* Modal: Declare Task Completed */}
       {selectedTaskToDeclare && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold text-slate-900 text-lg">Declarar Acción Realizada</h3>
+              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">Declarar Acción Realizada</h3>
               <button
                 onClick={() => setSelectedTaskToDeclare(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 ✕
               </button>
             </div>
 
-            <div className="bg-sky-50 rounded-2xl p-3 mb-4 text-xs text-sky-800">
+            <div className="bg-sky-50 rounded-2xl p-3 mb-4 text-xs text-sky-800 break-all">
               <p className="font-bold">{selectedTaskToDeclare.title}</p>
-              <p className="text-sky-700 mt-0.5">Destino: {selectedTaskToDeclare.target_profile_url}</p>
+              <p className="text-sky-700 mt-0.5 text-[11px]">Destino: {selectedTaskToDeclare.target_profile_url}</p>
             </div>
 
             <form onSubmit={handleDeclareSubmit} className="space-y-4">
@@ -481,7 +484,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   value={evidenceNote}
                   onChange={(e) => setEvidenceNote(e.target.value)}
                   placeholder="Escribe brevemente qué te pareció el contenido o video..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-3 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
@@ -494,7 +497,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   value={evidenceUrl}
                   onChange={(e) => setEvidenceUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
                 <p className="text-[10px] text-slate-400 mt-1">
                   Las capturas se usan únicamente para validar el cumplimiento humano de la tarea.
@@ -505,13 +508,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedTaskToDeclare(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md"
                 >
                   Confirmar Declaración
                 </button>
@@ -523,8 +526,8 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
       {/* Modal: Validate Received Hug */}
       {selectedTaskToValidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-extrabold text-slate-900 text-lg">Validar Abrazo Recibido</h3>
               <button

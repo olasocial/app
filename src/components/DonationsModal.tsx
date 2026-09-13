@@ -28,34 +28,34 @@ export const DonationsModal: React.FC<DonationsModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 text-lg"
         >
           ✕
         </button>
 
         {isSuccess ? (
-          <div className="text-center py-8 space-y-3">
+          <div className="text-center py-6 sm:py-8 space-y-3">
             <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900">¡Muchísimas Gracias!</h3>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">¡Muchísimas Gracias!</h3>
             <p className="text-xs text-slate-600 max-w-xs mx-auto">
               Tu aporte voluntario mantiene a OLA SOCIAL independiente, rápida y protegida de la manipulación algorítmica.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-9 h-9 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+            <div className="flex items-center gap-2.5 mb-2 pr-6">
+              <div className="w-9 h-9 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
                 <Heart className="w-5 h-5 fill-rose-500" />
               </div>
               <div>
-                <h3 className="text-lg font-extrabold text-slate-900">Apoyar a OLA SOCIAL</h3>
-                <p className="text-xs text-slate-500">Donación comunitaria voluntaria</p>
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900">Apoyar a OLA SOCIAL</h3>
+                <p className="text-[11px] sm:text-xs text-slate-500">Donación comunitaria voluntaria</p>
               </div>
             </div>
 
@@ -74,7 +74,7 @@ export const DonationsModal: React.FC<DonationsModalProps> = ({ isOpen, onClose 
                     key={amt}
                     type="button"
                     onClick={() => setSelectedAmount(amt)}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all touch-manipulation ${
                       selectedAmount === amt
                         ? 'bg-rose-600 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -93,7 +93,7 @@ export const DonationsModal: React.FC<DonationsModalProps> = ({ isOpen, onClose 
                 value={donorName}
                 onChange={(e) => setDonorName(e.target.value)}
                 placeholder="Ej. María o Anónimo"
-                className="w-full text-xs rounded-xl border border-slate-200 p-2.5"
+                className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5"
               />
             </div>
 
@@ -106,17 +106,17 @@ export const DonationsModal: React.FC<DonationsModalProps> = ({ isOpen, onClose 
                 value={donorMessage}
                 onChange={(e) => setDonorMessage(e.target.value)}
                 placeholder="¡Sigan adelante con la comunidad!"
-                className="w-full text-xs rounded-xl border border-slate-200 p-2.5"
+                className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5"
               />
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="submit"
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 min-h-[44px] rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 touch-manipulation"
               >
-                <Heart className="w-4 h-4 fill-white" />
-                <span>Confirmar Donación Voluntaria (${selectedAmount} USD)</span>
+                <Heart className="w-4 h-4 fill-white shrink-0" />
+                <span className="truncate">Confirmar Donación Voluntaria (${selectedAmount} USD)</span>
               </button>
             </div>
           </form>

@@ -55,22 +55,22 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1"
         >
           ✕
         </button>
 
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600">
+        <div className="flex items-center gap-2.5 mb-4 pr-6">
+          <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600 shrink-0">
             <PlusCircle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-extrabold text-slate-900">Crear Campaña de Descubrimiento</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900">Crear Campaña de Descubrimiento</h3>
+            <p className="text-[11px] sm:text-xs text-slate-500">
               Presenta tu contenido para que otros usuarios lo conozcan voluntariamente.
             </p>
           </div>
@@ -82,14 +82,14 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-700 mb-1">Plataforma</label>
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as SocialPlatformKey)}
-                className="w-full rounded-xl border border-slate-200 p-2.5 bg-white"
+                className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-base sm:text-xs"
               >
                 {Object.keys(PLATFORM_REGISTRY).map((k) => (
                   <option key={k} value={k}>
@@ -104,7 +104,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
               <select
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-200 p-2.5 bg-white"
+                className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-base sm:text-xs"
               >
                 <option value="DISCOVER">Descubrir y conocer</option>
                 <option value="VISIT">Visitar perfil público</option>
@@ -122,8 +122,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej: Nuevo episodio sobre producción musical sostenible"
-              className="w-full rounded-xl border border-slate-200 p-2.5"
+              placeholder="Ej: Nuevo episodio sobre producción musical"
+              className="w-full rounded-xl border border-slate-200 p-2.5 text-base sm:text-xs"
             />
           </div>
 
@@ -137,11 +137,11 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
               placeholder="https://youtube.com/watch?v=..."
-              className="w-full rounded-xl border border-slate-200 p-2.5"
+              className="w-full rounded-xl border border-slate-200 p-2.5 text-base sm:text-xs"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-700 mb-1">Usuario / Handle</label>
               <input
@@ -149,7 +149,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
                 value={targetUsername}
                 onChange={(e) => setTargetUsername(e.target.value)}
                 placeholder="ej. micreador"
-                className="w-full rounded-xl border border-slate-200 p-2.5"
+                className="w-full rounded-xl border border-slate-200 p-2.5 text-base sm:text-xs"
               />
             </div>
 
@@ -161,7 +161,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
                 max={200}
                 value={maxParticipants}
                 onChange={(e) => setMaxParticipants(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-200 p-2.5"
+                className="w-full rounded-xl border border-slate-200 p-2.5 text-base sm:text-xs"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Explica qué van a encontrar y por qué es interesante..."
-              className="w-full rounded-xl border border-slate-200 p-2.5"
+              className="w-full rounded-xl border border-slate-200 p-2.5 text-base sm:text-xs"
             />
           </div>
 
@@ -185,17 +185,17 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen
             </span>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md text-center"
             >
               Publicar Campaña
             </button>

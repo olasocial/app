@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  Award
 } from 'lucide-react';
 import { OlaLogo } from './OlaLogo';
 import { useAuth } from '../context/AuthContext';
@@ -140,6 +141,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
+              onClick={() => onSelectTab('progress')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                currentTab === 'progress'
+                  ? 'bg-white text-indigo-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Niveles & Progreso</span>
+            </button>
+
+            <button
               onClick={() => onSelectTab('security')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
                 currentTab === 'security'
@@ -167,11 +180,11 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Right Action Tools */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Voluntary Donation Button */}
             <button
               onClick={onOpenDonations}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-98 transition-all"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-98 transition-all touch-manipulation"
               title="Apoyar a OLA SOCIAL voluntariamente"
             >
               <Heart className="w-3.5 h-3.5 fill-white" />
@@ -181,8 +194,12 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Language Selector */}
             <div className="relative">
               <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                className="p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => {
+                  setShowLangMenu(!showLangMenu);
+                  setShowNotifications(false);
+                  setShowUserMenu(false);
+                }}
+                className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors touch-manipulation"
                 title="Cambiar idioma"
               >
                 <Globe className="w-4 h-4" />
@@ -211,20 +228,24 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Realtime Notifications Bell */}
             <div className="relative">
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowLangMenu(false);
+                  setShowUserMenu(false);
+                }}
+                className="relative p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors touch-manipulation"
                 title="Notificaciones"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse">
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-auto mt-1 sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden">
                   <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 text-sm">Notificaciones</h4>
                     {unreadCount > 0 && (
@@ -270,7 +291,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-xs hover:shadow-md transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-xs hover:shadow-md transition-all cursor-pointer touch-manipulation"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Acceder</span>
@@ -278,8 +299,12 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <div className="relative">
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-sky-300 transition-all cursor-pointer"
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    setShowNotifications(false);
+                    setShowLangMenu(false);
+                  }}
+                  className="flex items-center gap-2 p-1.5 min-h-[44px] min-w-[44px] rounded-full hover:ring-2 hover:ring-sky-300 transition-all cursor-pointer touch-manipulation"
                 >
                   <img
                     src={user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=olasocial'}
@@ -292,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 text-sm">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-auto mt-1 sm:mt-2 w-[calc(100vw-1rem)] sm:w-56 max-w-xs bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 text-sm">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="text-xs text-slate-500">Conectado como</p>
                     <p className="font-bold text-slate-900 truncate">{user?.display_name}</p>
@@ -432,6 +457,25 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Ranking de Mejores Abrazadores
+            </button>
+            <button
+              onClick={() => {
+                onSelectTab('progress');
+                setMobileMenuOpen(false);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-xl text-sm font-semibold flex items-center justify-between ${
+                currentTab === 'progress' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <span>Niveles & Progreso</span>
+              </span>
+              {user && (
+                <span className="text-[11px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-bold">
+                  Nivel {user.level_number || 1}
+                </span>
+              )}
             </button>
             <button
               onClick={() => {

@@ -99,12 +99,12 @@ export const RankingView: React.FC = () => {
               return (
                 <div
                   key={u.id}
-                  className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-slate-50/60 rounded-2xl px-3 transition-colors"
+                  className="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 hover:bg-slate-50/60 rounded-2xl px-2 sm:px-3 transition-colors"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     {/* Rank Badge */}
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 ${getRankBadge(
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-extrabold text-xs sm:text-sm shrink-0 ${getRankBadge(
                         rank
                       )}`}
                     >
@@ -115,38 +115,47 @@ export const RankingView: React.FC = () => {
                     <img
                       src={u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username || 'creator'}`}
                       alt={u.display_name}
-                      className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-slate-200 shrink-0"
                     />
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-slate-900 text-sm">{u.display_name}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
-                          {u.user_level}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm truncate max-w-[160px] sm:max-w-none">
+                          {u.display_name}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
+                          Nivel {u.level_number || 1} • {u.user_level || 'EXPLORADOR'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400">@{u.username || u.email.split('@')[0]}</p>
+                      <p className="text-[11px] sm:text-xs text-slate-400 truncate">@{u.username || u.email.split('@')[0]}</p>
                     </div>
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center gap-6 text-right justify-between sm:justify-end">
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Abrazos Válidos</span>
-                      <span className="font-extrabold text-slate-800 text-sm">{u.hugs_verified || 0}</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 pt-2.5 sm:pt-0 border-t border-slate-100 sm:border-t-0 pl-11 sm:pl-0">
+                    <div className="text-left sm:text-right">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Abrazos</span>
+                      <span className="font-extrabold text-slate-800 text-xs sm:text-sm">{u.hugs_verified || 0}</span>
                     </div>
 
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Estrellas</span>
-                      <span className="font-extrabold text-amber-500 text-sm flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                    <div className="text-left sm:text-right">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Estrellas</span>
+                      <span className="font-extrabold text-amber-500 text-xs sm:text-sm flex items-center gap-1">
+                        <Star className="w-3 sm:w-3.5 h-3 sm:h-3.5 fill-amber-400 shrink-0" />
                         {u.stars_count || 0}
                       </span>
                     </div>
 
-                    <div className="pl-3 border-l border-slate-100 text-right">
-                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Score OLA</span>
-                      <span className="font-black text-rose-600 text-base">{weightedScore}</span>
+                    <div className="text-left sm:text-right">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Reputación</span>
+                      <span className="font-extrabold text-emerald-600 text-xs sm:text-sm">
+                        {(u.reputation_score !== undefined ? u.reputation_score : 100).toFixed(1)}
+                      </span>
+                    </div>
+
+                    <div className="pl-3 border-l border-slate-200 sm:border-slate-100 text-right">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Score</span>
+                      <span className="font-black text-rose-600 text-sm sm:text-base">{weightedScore}</span>
                     </div>
                   </div>
                 </div>

@@ -174,15 +174,15 @@ export const SecurityCenter: React.FC = () => {
 
       {/* MFA Modal */}
       {mfaModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
-            <h3 className="font-extrabold text-slate-900 text-lg mb-2">Configurar Google Authenticator (TOTP)</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg mb-2">Configurar Google Authenticator (TOTP)</h3>
             <p className="text-xs text-slate-600 mb-4">
               Escanea la clave secreta en tu aplicación TOTP favorita e introduce el código de 6 dígitos.
             </p>
 
-            <div className="p-4 bg-slate-100 rounded-2xl text-center mb-4">
-              <div className="font-mono text-sm font-black text-slate-800 tracking-wider">
+            <div className="p-3.5 sm:p-4 bg-slate-100 rounded-2xl text-center mb-4">
+              <div className="font-mono text-xs sm:text-sm font-black text-slate-800 tracking-wider break-all">
                 JBSWY3DPEHPK3PXP
               </div>
               <p className="text-[10px] text-slate-500 mt-1">Clave secreta manual para tu app</p>
@@ -204,17 +204,17 @@ export const SecurityCenter: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setMfaModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md text-center"
                 >
                   Verificar y Activar 2FA
                 </button>
@@ -226,9 +226,9 @@ export const SecurityCenter: React.FC = () => {
 
       {/* Account Deletion Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
-            <h3 className="font-extrabold text-rose-700 text-lg mb-2">Confirmar Eliminación de Cuenta</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+            <h3 className="font-extrabold text-rose-700 text-base sm:text-lg mb-2">Confirmar Eliminación de Cuenta</h3>
             <p className="text-xs text-slate-600 mb-3">
               Esta acción es irreversible. Se revocarán todas tus sesiones activas y se anonimizará tu perfil público.
             </p>
@@ -243,7 +243,7 @@ export const SecurityCenter: React.FC = () => {
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
                   placeholder="Ayúdanos a mejorar..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5"
                 />
               </div>
 
@@ -256,22 +256,22 @@ export const SecurityCenter: React.FC = () => {
                   required
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setDeleteModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={deleteConfirmText.toLowerCase() !== 'eliminar mi cuenta'}
-                  className="px-5 py-2 rounded-xl bg-rose-600 disabled:opacity-40 text-white text-xs font-bold shadow-md"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 disabled:opacity-40 text-white text-xs font-bold shadow-md text-center"
                 >
                   Eliminar Definitivamente
                 </button>

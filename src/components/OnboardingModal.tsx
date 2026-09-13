@@ -38,16 +38,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 relative text-center">
         {/* Animated Brand Logo */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <OlaLogo variant="hero" animate={true} className="p-0" />
         </div>
 
-        <div className="space-y-5 text-left">
+        <div className="space-y-4 sm:space-y-5 text-left">
           <div className="text-center">
-            <h3 className="text-xl font-extrabold text-slate-900">Bienvenido a OLA SOCIAL</h3>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">Bienvenido a OLA SOCIAL</h3>
             <p className="text-xs text-slate-500 mt-1">
               Hola, <span className="font-semibold text-slate-800">{user.email}</span>. Completa la activación de tu cuenta comunitaria.
             </p>
@@ -60,7 +60,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={user.display_name || 'Tu nombre en la comunidad'}
-              className="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-sky-500 outline-none"
+              className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-sky-500 outline-none"
             />
           </div>
 

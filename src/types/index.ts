@@ -32,7 +32,8 @@ export enum TaskStatus {
   VERIFIED = 'VERIFIED',
   REJECTED = 'REJECTED',
   EXPIRED = 'EXPIRED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
+  DISPUTED = 'DISPUTED'
 }
 
 export enum VerificationStatus {
@@ -53,9 +54,14 @@ export enum UserLevel {
   NUEVO = 'NUEVO',
   EXPLORADOR = 'EXPLORADOR',
   COLABORADOR = 'COLABORADOR',
+  APOYADOR = 'APOYADOR',
   IMPULSOR = 'IMPULSOR',
   REFERENTE = 'REFERENTE',
-  EMBAJADOR = 'EMBAJADOR'
+  GUIA = 'GUÍA',
+  EMBAJADOR = 'EMBAJADOR',
+  LIDER_COMUNITARIO = 'LÍDER COMUNITARIO',
+  MAESTRO_DE_APOYO = 'MAESTRO DE APOYO',
+  PULSO_SOCIAL = 'PULSO SOCIAL'
 }
 
 export enum PresenceStatus {
@@ -142,6 +148,13 @@ export interface UserProfile {
   campaigns_completed: number;
   confidence_level: number; // 0 to 100
   user_level: UserLevel;
+  level_number?: number; // 1 to 10
+  experience_points?: number; // XP oficial
+  reputation_score?: number; // 0 to 1000
+  unique_users_helped?: number;
+  unique_platforms_supported?: number;
+  unique_campaigns_completed?: number;
+  community_score?: number;
   warnings_count: number;
   is_18_confirmed: boolean;
   terms_accepted_at: string;
@@ -273,4 +286,135 @@ export interface PlatformPolicyVersion {
 
 export type AuditLogEntry = AdminAuditLog;
 export type CampaignTask = Task;
+
+// ==========================================
+// SISTEMA OFICIAL DE NIVELES & AYUDA CERTIFICADA
+// ==========================================
+
+export interface LevelRequirement {
+  level_number: number;
+  level_name: string;
+  min_xp: number;
+  min_verified_supports: number;
+  min_reputation: number;
+  min_unique_users: number;
+  min_unique_platforms: number;
+  perks: string[];
+  badge_reward_code?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ExperienceEntry {
+  id: string;
+  user_id: string;
+  source_type: string;
+  source_id?: string;
+  xp_delta: number;
+  reason: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
+export interface ReputationEvent {
+  id: string;
+  user_id: string;
+  event_type: string;
+  score_delta: number;
+  source_id?: string;
+  reason: string;
+  created_at: string;
+}
+
+export type VerificationMethod =
+  | 'RECIPIENT_CONFIRMATION'
+  | 'USER_EVIDENCE'
+  | 'URL_CHECK'
+  | 'PLATFORM_API'
+  | 'MANUAL_REVIEW'
+  | 'AUTOMATED_SIGNAL'
+  | 'MULTI_SIGNAL';
+
+export type EvidenceType =
+  | 'SCREENSHOT'
+  | 'URL'
+  | 'TEXT_CONFIRMATION'
+  | 'PLATFORM_REFERENCE'
+  | 'MANUAL_REVIEW';
+
+export interface SupportVerification {
+  id: string;
+  task_id: string;
+  giver_id: string;
+  receiver_id: string;
+  campaign_id?: string;
+  platform: SocialPlatformKey;
+  verification_method: VerificationMethod;
+  verification_strength: number; // 1 to 5
+  evidence_type?: EvidenceType;
+  evidence_url?: string;
+  evidence_note?: string;
+  stars: number;
+  feedback?: string;
+  is_certified: boolean;
+  certified_at: string;
+}
+
+export interface Badge {
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'MILESTONE' | 'QUALITY' | 'DIVERSITY' | 'SPECIAL';
+  created_at?: string;
+  awarded_at?: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_code: string;
+  awarded_at: string;
+}
+
+export type DisputeStatus =
+  | 'OPEN'
+  | 'UNDER_REVIEW'
+  | 'RESOLVED_HELPER'
+  | 'RESOLVED_RECIPIENT'
+  | 'REJECTED'
+  | 'ESCALATED';
+
+export interface Dispute {
+  id: string;
+  task_id: string;
+  reporter_id: string;
+  accused_id: string;
+  reason: string;
+  evidence_url?: string;
+  status: DisputeStatus;
+  resolution_notes?: string;
+  resolved_by?: string;
+  created_at: string;
+  resolved_at?: string;
+  reporter_name?: string;
+  accused_name?: string;
+}
+
+export interface DisputeEvent {
+  id: string;
+  dispute_id: string;
+  actor_id?: string;
+  action: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface SystemConfigItem {
+  key: string;
+  value: any;
+  description?: string;
+  updated_at?: string;
+}
+
 

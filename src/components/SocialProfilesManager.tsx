@@ -140,7 +140,7 @@ export const SocialProfilesManager: React.FC = () => {
                   setSelectedPlatform(e.target.value as SocialPlatformKey);
                   setPreviewData(null);
                 }}
-                className="w-full text-xs rounded-xl border border-slate-200 p-3 bg-white focus:ring-2 focus:ring-sky-500"
+                className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-3 bg-white focus:ring-2 focus:ring-sky-500"
               >
                 {Object.keys(PLATFORM_REGISTRY).map((k) => (
                   <option key={k} value={k}>
@@ -160,7 +160,7 @@ export const SocialProfilesManager: React.FC = () => {
                 value={profileUrlInput}
                 onChange={(e) => setProfileUrlInput(e.target.value)}
                 placeholder="ej. https://youtube.com/@mi_canal o @mi_usuario"
-                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-sky-500"
+                className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-sky-500"
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export const SocialProfilesManager: React.FC = () => {
               id="isPrimary"
               checked={isPrimaryCheck}
               onChange={(e) => setIsPrimaryCheck(e.target.checked)}
-              className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500"
+              className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 w-4 h-4"
             />
             <label htmlFor="isPrimary" className="text-xs text-slate-700 font-medium cursor-pointer">
               ¿Esta es tu red social principal? (Solo una puede ser primaria)
@@ -181,7 +181,7 @@ export const SocialProfilesManager: React.FC = () => {
           <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md transition-colors"
+              className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md transition-colors touch-manipulation"
             >
               Consultar y Verificar Perfil
             </button>
@@ -193,45 +193,45 @@ export const SocialProfilesManager: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4"
+            className="mt-6 p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                Confirmación de Procedencia de Datos
+                Confirmación de Datos
               </span>
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800">
                 {PLATFORM_REGISTRY[previewData.platform].name}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-100 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-lg shadow-xs">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-slate-100 flex items-center gap-3">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-lg shadow-xs shrink-0">
                 {previewData.username.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <div className="text-sm font-extrabold text-slate-900">@{previewData.username}</div>
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold text-slate-900 truncate">@{previewData.username}</div>
                 <div className="text-xs text-sky-600 truncate">{previewData.profileUrl}</div>
-                <div className="text-[11px] text-slate-500 mt-1">{previewData.apiNotice}</div>
+                <div className="text-[11px] text-slate-500 mt-0.5">{previewData.apiNotice}</div>
               </div>
             </div>
 
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-900">
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-900 leading-relaxed">
               <strong>Aviso de confirmación: </strong>
               Al confirmar este perfil, certificas de buena fe que te pertenece o lo representas legítimamente. Una vez confirmado quedará bloqueado para garantizar seguridad.
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setPreviewData(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 text-center"
               >
                 No es mi perfil
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAdd}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md text-center"
               >
                 Confirmar y Bloquear Perfil
               </button>
@@ -250,13 +250,13 @@ export const SocialProfilesManager: React.FC = () => {
             return (
               <div
                 key={prof.id}
-                className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between"
+                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2">
                       <span
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: platformConfig?.color || '#0284c7' }}
                       />
                       <span className="text-xs font-bold text-slate-800">
@@ -264,7 +264,7 @@ export const SocialProfilesManager: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {prof.is_primary && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                           Principal
@@ -277,19 +277,19 @@ export const SocialProfilesManager: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-sm font-extrabold text-slate-900">@{prof.username}</div>
+                  <div className="text-sm font-extrabold text-slate-900 truncate">@{prof.username}</div>
                   <a
                     href={prof.profile_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-sky-600 hover:underline flex items-center gap-1 mt-0.5 truncate"
+                    className="text-xs text-sky-600 hover:underline flex items-center gap-1 mt-0.5 max-w-[280px] sm:max-w-none truncate"
                   >
-                    <span>{prof.profile_url}</span>
+                    <span className="truncate">{prof.profile_url}</span>
                     <ExternalLink className="w-3 h-3 shrink-0" />
                   </a>
 
-                  <div className="mt-3 text-[11px] text-slate-500 bg-slate-50 p-2 rounded-xl">
-                    Estado: <strong className="text-slate-800">{prof.verification_status}</strong>. Bloqueado por seguridad el{' '}
+                  <div className="mt-3 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
+                    Estado: <strong className="text-slate-800">{prof.verification_status}</strong>. Bloqueado el{' '}
                     {new Date(prof.locked_at).toLocaleDateString()}.
                   </div>
                 </div>
@@ -298,7 +298,7 @@ export const SocialProfilesManager: React.FC = () => {
                   <span className="text-[11px] text-slate-400">Protección activa</span>
                   <button
                     onClick={() => setRequestModalProfileId(prof.id)}
-                    className="text-xs text-sky-600 hover:text-sky-800 font-semibold inline-flex items-center gap-1"
+                    className="text-xs text-sky-600 hover:text-sky-800 font-semibold inline-flex items-center gap-1 p-1 touch-manipulation"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Solicitar cambio</span>
@@ -312,9 +312,9 @@ export const SocialProfilesManager: React.FC = () => {
 
       {/* Change Request Modal */}
       {requestModalProfileId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
-            <h3 className="font-extrabold text-slate-900 text-lg mb-2">Solicitar Cambio de Perfil</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
+            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg mb-2">Solicitar Cambio de Perfil</h3>
             <p className="text-xs text-slate-600 mb-4">
               Para proteger la integridad de OLA SOCIAL y prevenir fraudes, los cambios de perfil son revisados por un moderador administrativo.
             </p>
@@ -330,21 +330,21 @@ export const SocialProfilesManager: React.FC = () => {
                   value={changeReason}
                   onChange={(e) => setChangeReason(e.target.value)}
                   placeholder="Explica la razón del cambio (error tipográfico, cambio legítimo de handle, etc.)..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-sky-500"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setRequestModalProfileId(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md text-center"
                 >
                   Enviar a Moderación
                 </button>

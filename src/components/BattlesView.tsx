@@ -125,45 +125,49 @@ export const BattlesView: React.FC = () => {
               </div>
 
               {/* Head-to-Head Arena Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 items-stretch">
                 {/* Creator 1 */}
-                <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center">
-                  <img
-                    src={battle.creator1_avatar}
-                    alt={battle.creator1_name}
-                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md mb-3"
-                  />
-                  <h4 className="font-extrabold text-slate-900 text-base">{battle.creator1_name}</h4>
-                  <p className="text-xs text-slate-500">Compromisos de apoyo recibidos</p>
-                  <div className="text-3xl font-black text-rose-600 my-2">
-                    {battle.creator1_pledges}
+                <div className="text-center p-4 sm:p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-between">
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={battle.creator1_avatar}
+                      alt={battle.creator1_name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md mb-2 sm:mb-3"
+                    />
+                    <h4 className="font-extrabold text-slate-900 text-sm sm:text-base">{battle.creator1_name}</h4>
+                    <p className="text-[11px] sm:text-xs text-slate-500">Compromisos recibidos</p>
+                    <div className="text-2xl sm:text-3xl font-black text-rose-600 my-1.5 sm:my-2">
+                      {battle.creator1_pledges}
+                    </div>
                   </div>
                   <button
                     onClick={() => handlePledge(battle.id, battle.creator1_id)}
-                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 min-h-[42px] rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 touch-manipulation"
                   >
-                    <Heart className="w-3.5 h-3.5 fill-white" />
+                    <Heart className="w-3.5 h-3.5 fill-white shrink-0" />
                     <span>Apoyar a {battle.creator1_name.split(' ')[0]}</span>
                   </button>
                 </div>
 
                 {/* Creator 2 */}
-                <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center">
-                  <img
-                    src={battle.creator2_avatar}
-                    alt={battle.creator2_name}
-                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md mb-3"
-                  />
-                  <h4 className="font-extrabold text-slate-900 text-base">{battle.creator2_name}</h4>
-                  <p className="text-xs text-slate-500">Compromisos de apoyo recibidos</p>
-                  <div className="text-3xl font-black text-indigo-600 my-2">
-                    {battle.creator2_pledges}
+                <div className="text-center p-4 sm:p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-between">
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={battle.creator2_avatar}
+                      alt={battle.creator2_name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md mb-2 sm:mb-3"
+                    />
+                    <h4 className="font-extrabold text-slate-900 text-sm sm:text-base">{battle.creator2_name}</h4>
+                    <p className="text-[11px] sm:text-xs text-slate-500">Compromisos recibidos</p>
+                    <div className="text-2xl sm:text-3xl font-black text-indigo-600 my-1.5 sm:my-2">
+                      {battle.creator2_pledges}
+                    </div>
                   </div>
                   <button
                     onClick={() => handlePledge(battle.id, battle.creator2_id)}
-                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 min-h-[42px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 touch-manipulation"
                   >
-                    <Heart className="w-3.5 h-3.5 fill-white" />
+                    <Heart className="w-3.5 h-3.5 fill-white shrink-0" />
                     <span>Apoyar a {battle.creator2_name.split(' ')[0]}</span>
                   </button>
                 </div>
@@ -187,16 +191,16 @@ export const BattlesView: React.FC = () => {
 
       {/* Evidence Upload Modal with AI Assistant */}
       {evidenceModalBattleId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-extrabold text-slate-900 text-lg">Evidencia de Apoyo en Batalla</h3>
+              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">Evidencia de Apoyo en Batalla</h3>
               <button
                 onClick={() => {
                   setEvidenceModalBattleId(null);
                   setAiAnalysisResult(null);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 ✕
               </button>
@@ -216,7 +220,7 @@ export const BattlesView: React.FC = () => {
                   value={evidenceUrl}
                   onChange={(e) => setEvidenceUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-purple-500"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
@@ -229,7 +233,7 @@ export const BattlesView: React.FC = () => {
                   value={evidenceNote}
                   onChange={(e) => setEvidenceNote(e.target.value)}
                   placeholder="Detalles visibles en la captura..."
-                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-purple-500"
+                  className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
@@ -238,9 +242,9 @@ export const BattlesView: React.FC = () => {
                 type="button"
                 onClick={handleAnalyzeEvidence}
                 disabled={isAnalyzing}
-                className="w-full py-2 px-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-2 touch-manipulation"
               >
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
                 <span>{isAnalyzing ? 'Analizando captura con IA...' : 'Asistente de Análisis de Evidencia (IA)'}</span>
               </button>
 
@@ -250,14 +254,14 @@ export const BattlesView: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => {
                     setEvidenceModalBattleId(null);
                     setAiAnalysisResult(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
                 >
                   Cerrar
                 </button>
@@ -268,7 +272,7 @@ export const BattlesView: React.FC = () => {
                     setAiAnalysisResult(null);
                     setPledgeFeedback('Evidencia enviada para revisión humana por los moderadores.');
                   }}
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md text-center"
                 >
                   Enviar para Revisión Humana
                 </button>

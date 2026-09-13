@@ -11,18 +11,20 @@ export interface TurnstileVerificationResult {
 // Cloudflare official test keys:
 // 1x00000000000000000000AA : Always passes (recommended test key)
 // 2x00000000000000000000AB : Always blocks
-const ENV_TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+const ENV_TURNSTILE_SITE_KEY =
+  import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY ||
+  import.meta.env.VITE_TURNSTILE_SITE_KEY;
 export const CLOUDFLARE_TEST_SITE_KEY = '1x00000000000000000000AA';
 
 export const TURNSTILE_SITE_KEY =
-  ENV_TURNSTILE_SITE_KEY && ENV_TURNSTILE_SITE_KEY !== 'your-turnstile-site-key'
+  ENV_TURNSTILE_SITE_KEY && ENV_TURNSTILE_SITE_KEY.length > 10
     ? ENV_TURNSTILE_SITE_KEY
     : CLOUDFLARE_TEST_SITE_KEY;
 
 export const isTurnstileProductionConfigured = Boolean(
   ENV_TURNSTILE_SITE_KEY &&
-  ENV_TURNSTILE_SITE_KEY !== 'your-turnstile-site-key' &&
-  ENV_TURNSTILE_SITE_KEY !== CLOUDFLARE_TEST_SITE_KEY
+  ENV_TURNSTILE_SITE_KEY !== CLOUDFLARE_TEST_SITE_KEY &&
+  ENV_TURNSTILE_SITE_KEY.length > 10
 );
 
 /**

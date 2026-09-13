@@ -126,7 +126,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center text-center p-4 select-none ${className}`}
+      className={`relative flex flex-col items-center justify-center text-center px-3 py-2 sm:p-4 select-none max-w-full overflow-hidden ${className}`}
     >
       {/* Animated aura rings */}
       <div className="relative flex items-center justify-center">
@@ -141,7 +141,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
               : {}
           }
           transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-          className="absolute -inset-6 rounded-full bg-gradient-to-tr from-sky-300/40 via-emerald-300/30 to-amber-300/30 blur-2xl"
+          className="absolute -inset-4 sm:-inset-6 rounded-full bg-gradient-to-tr from-sky-300/40 via-emerald-300/30 to-amber-300/30 blur-xl sm:blur-2xl pointer-events-none"
         />
 
         {/* Center Logo Image with Floating Motion */}
@@ -149,7 +149,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
           animate={
             animate
               ? {
-                  y: [0, -8, 0],
+                  y: [0, -6, 0],
                   rotate: [0, 1.5, -1.5, 0]
                 }
               : {}
@@ -160,7 +160,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
           <img
             src="/logo.png"
             alt="Ola Social - Abrazos que conectan personas"
-            className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 object-contain drop-shadow-2xl rounded-3xl"
+            className="w-24 h-24 sm:w-36 sm:h-36 md:w-48 md:h-48 object-contain drop-shadow-xl sm:drop-shadow-2xl rounded-2xl sm:rounded-3xl"
           />
 
           {/* Pulsing heart spotlight */}
@@ -174,7 +174,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
                 : {}
             }
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-rose-500/20 rounded-full blur-md pointer-events-none"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 bg-rose-500/20 rounded-full blur-md pointer-events-none"
           />
         </motion.div>
       </div>
@@ -184,20 +184,20 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="mt-3 relative z-10"
+        className="mt-2.5 sm:mt-3 relative z-10 max-w-full px-2"
       >
-        <div className="inline-flex items-center gap-2">
-          <h1 className="font-['Outfit',sans-serif] text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2">
+          <h1 className="font-['Outfit',sans-serif] text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
             Ola Social
           </h1>
-          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 animate-bounce" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 animate-bounce shrink-0" />
         </div>
-        <p className="mt-1 text-sm sm:text-base font-medium text-slate-600 max-w-md mx-auto">
+        <p className="mt-0.5 sm:mt-1 text-xs sm:text-base font-medium text-slate-600 max-w-md mx-auto">
           "Abrazos que conectan personas."
         </p>
-        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          <span>Descubrimiento y apoyo mutuo entre creadores y comunidades</span>
+        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70 max-w-[95vw]">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+          <span className="truncate">Descubrimiento y apoyo mutuo entre creadores</span>
         </div>
       </motion.div>
     </div>

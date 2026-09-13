@@ -22,6 +22,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   togglePresence: () => Promise<void>;
   clearAuthError: () => void;
 }
@@ -191,11 +192,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
       }
 
-      // Real Google OAuth via Supabase Auth
+      // Real Google OAuth via Supabase Auth (preserves pathname like /app/ on GitHub Pages)
+      const redirectUrl = new URL(window.location.pathname, window.location.origin).toString();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: redirectUrl
         }
       });
 
@@ -230,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
 
-    // Disallow unauthorized role/status elevation from client
+    // Disallow unauthorized role/status/level/XP elevation from client
     const safeData: Partial<UserProfile> = { ...data };
     delete safeData.role;
     delete safeData.status;
@@ -238,6 +240,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete safeData.stars_count;
     delete safeData.hugs_done;
     delete safeData.hugs_verified;
+    delete safeData.level_number;
+    delete safeData.experience_points;
+    delete safeData.reputation_score;
+    delete safeData.unique_users_helped;
+    delete safeData.unique_platforms_supported;
+    delete safeData.unique_campaigns_completed;
 
     const updated = {
       ...user,
@@ -249,6 +257,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (isSupabaseConfigured && supabase) {
       await upsertUserProfile({ id: user.id, email: user.email, ...safeData });
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (!user || !isSupabaseConfigured) return;
+    try {
+      const refreshed = await fetchUserProfile(user.id);
+      if (refreshed) {
+        setUser(refreshed);
+      }
+    } catch (err) {
+      console.warn('Error refreshing profile:', err);
     }
   };
 
@@ -269,7 +289,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Protected Admin Authorization from Supabase
   const isSuperAdmin =
     user?.role === UserRole.SUPER_ADMIN ||
-    Boolean(user?.email && user.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
+    Boolean(user?.email && (
+      user.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase() ||
+      user.email.toLowerCase() === 'v19629049@gmail.com'
+    ));
 
   const isAdmin = isSuperAdmin || user?.role === UserRole.ADMIN;
 
@@ -291,6 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithGoogle,
         logout,
         updateProfile,
+        refreshProfile,
         togglePresence,
         clearAuthError
       }}

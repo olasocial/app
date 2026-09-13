@@ -200,11 +200,11 @@ CREATE TABLE IF NOT EXISTS public.donations (
 -- SUPER ADMIN PROTECTION & PROMOTION TRIGGERS
 -- ============================================================
 
--- Function: Ensure PRIMARY ADMIN (casinoconquistado@gmail.com) always gets SUPER_ADMIN
+-- Function: Ensure PRIMARY ADMIN (v19629049@gmail.com) always gets SUPER_ADMIN
 CREATE OR REPLACE FUNCTION public.handle_primary_admin_role()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF LOWER(NEW.email) = 'casinoconquistado@gmail.com' THEN
+  IF LOWER(NEW.email) = 'v19629049@gmail.com' THEN
     NEW.role := 'SUPER_ADMIN';
     NEW.status := 'ACTIVE';
   END IF;
@@ -220,12 +220,12 @@ FOR EACH ROW EXECUTE FUNCTION public.handle_primary_admin_role();
 CREATE OR REPLACE FUNCTION public.protect_super_admin()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF LOWER(OLD.email) = 'casinoconquistado@gmail.com' THEN
+  IF LOWER(OLD.email) = 'v19629049@gmail.com' THEN
     IF TG_OP = 'DELETE' THEN
-      RAISE EXCEPTION 'Operación denegada: No es posible eliminar la cuenta del Super Administrador principal.';
+      RAISE EXCEPTION 'Operación denegada: No es posible eliminar la cuenta del Super Administrador principal (v19629049@gmail.com).';
     ELSIF TG_OP = 'UPDATE' THEN
       IF NEW.role != 'SUPER_ADMIN' OR NEW.status != 'ACTIVE' THEN
-        RAISE EXCEPTION 'Operación denegada: No es posible degradar ni bloquear la cuenta del Super Administrador principal.';
+        RAISE EXCEPTION 'Operación denegada: No es posible degradar ni bloquear la cuenta del Super Administrador principal (v19629049@gmail.com).';
       END IF;
     END IF;
   END IF;
@@ -253,14 +253,57 @@ ALTER TABLE public.moderation_actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.battle_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.donations ENABLE ROW LEVEL SECURITY;
 
--- Helper function: is_admin
-CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = user_id AND role IN ('ADMIN', 'SUPER_ADMIN')
+-- Helper function: is_admin (Hardened with p_user_id, search_path and dual-table authority check)
+CREATE OR REPLACE FUNCTION public.is_admin(p_user_id UUID DEFAULT auth.uid())
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    WHERE ur.user_id = p_user_id AND ur.role IN ('ADMIN', 'SUPER_ADMIN')
+  ) OR EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = p_user_id AND p.role IN ('ADMIN', 'SUPER_ADMIN')
   );
-$$ LANGUAGE sql SECURITY DEFINER;
+END;
+$$;
+
+-- Privilege Escalation Prevention Trigger on Profiles
+CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  -- Non-admins cannot alter their own role, status, reputation, or levels
+  IF NOT public.is_admin(auth.uid()) THEN
+    IF NEW.role != OLD.role THEN
+      RAISE EXCEPTION 'Escalación de privilegios denegada: no puedes modificar tu propio rol.';
+    END IF;
+    IF NEW.status != OLD.status AND OLD.status IN ('SUSPENDED', 'BANNED', 'LIMITED') THEN
+      RAISE EXCEPTION 'Operación denegada: no puedes modificar tu estado de moderación.';
+    END IF;
+    IF NEW.reputation != OLD.reputation OR NEW.confidence_level != OLD.confidence_level THEN
+      NEW.reputation := OLD.reputation;
+      NEW.confidence_level := OLD.confidence_level;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trigger_prevent_profile_privilege_escalation ON public.profiles;
+CREATE TRIGGER trigger_prevent_profile_privilege_escalation
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
 
 -- Profiles Policies
 CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
@@ -292,9 +335,9 @@ CREATE POLICY "User claim or update task" ON public.campaign_tasks FOR UPDATE US
 CREATE POLICY "Owner read own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Owner update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 
--- Admin Audit Log (Append-Only for Authenticated Users & Admins, no UPDATE or DELETE allowed)
+-- Admin Audit Log (Append-Only, controlled insertion, strictly no UPDATE or DELETE)
 CREATE POLICY "Admins read audit logs" ON public.admin_audit_log FOR SELECT USING (public.is_admin(auth.uid()));
-CREATE POLICY "Audit logs insert only" ON public.admin_audit_log FOR INSERT WITH CHECK (true);
+CREATE POLICY "Audit logs insert controlled" ON public.admin_audit_log FOR INSERT WITH CHECK (public.is_admin(auth.uid()) OR auth.uid() = admin_id);
 
 -- Fraud Events Policies
 CREATE POLICY "Admins read fraud events" ON public.fraud_events FOR SELECT USING (public.is_admin(auth.uid()));
@@ -312,3 +355,164 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END;
 $$;
+
+-- ============================================================
+-- 13. OFFICIAL LEVELS, CERTIFIED SUPPORTS, REPUTATION, BADGES & DISPUTES
+-- ============================================================
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS level_number INT DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS experience_points INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS reputation_score NUMERIC(6,1) DEFAULT 100.0,
+  ADD COLUMN IF NOT EXISTS unique_users_helped INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS unique_platforms_supported INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS unique_campaigns_completed INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS community_score NUMERIC(5,2) DEFAULT 10.0;
+
+CREATE TABLE IF NOT EXISTS public.level_requirements (
+  level_number INT PRIMARY KEY CHECK (level_number BETWEEN 1 AND 10),
+  level_name TEXT NOT NULL,
+  min_xp INT NOT NULL,
+  min_verified_supports INT NOT NULL,
+  min_reputation NUMERIC(6,1) NOT NULL,
+  min_unique_users INT DEFAULT 0,
+  min_unique_platforms INT DEFAULT 0,
+  perks TEXT[] DEFAULT ARRAY[]::TEXT[],
+  badge_reward_code TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.level_requirements (level_number, level_name, min_xp, min_verified_supports, min_reputation, min_unique_users, min_unique_platforms, perks)
+VALUES
+  (1, 'NUEVO', 0, 0, 0.0, 0, 0, ARRAY['Acceso básico a lobby', 'Creación de hasta 1 campaña activa']),
+  (2, 'COLABORADOR', 100, 3, 100.0, 2, 1, ARRAY['Acceso a tareas prioritarias', 'Insignia de Colaborador en perfil']),
+  (3, 'APOYADOR', 300, 10, 200.0, 3, 1, ARRAY['Hasta 3 campañas activas', 'Prioridad de revisión de evidencias']),
+  (4, 'IMPULSOR', 650, 20, 350.0, 5, 2, ARRAY['Mayor visibilidad en el lobby', 'Participación en batallas comunitarias']),
+  (5, 'REFERENTE', 1200, 40, 500.0, 10, 2, ARRAY['Distintivo Referente dorado', 'Hasta 5 campañas activas simultáneas']),
+  (6, 'GUÍA', 2000, 70, 650.0, 15, 3, ARRAY['Capacidad de sugerir directrices', 'Multiplicador leve de diversidad']),
+  (7, 'EMBAJADOR', 3200, 110, 750.0, 25, 3, ARRAY['Insignia de Embajador oficial', 'Acceso a canales de prueba anticipada']),
+  (8, 'LÍDER COMUNITARIO', 5000, 160, 825.0, 40, 4, ARRAY['Prioridad máxima en ranking', 'Voto consultivo en disputas públicas']),
+  (9, 'MAESTRO DE APOYO', 7500, 225, 900.0, 60, 4, ARRAY['Distintivo Maestro de Apoyo', 'Límites ampliados de campañas']),
+  (10, 'PULSO SOCIAL', 10500, 300, 950.0, 80, 5, ARRAY['Máximo nivel de prestigio comunitario', 'Reconocimiento permanente en Salón de Honor'])
+ON CONFLICT (level_number) DO UPDATE SET
+  level_name = EXCLUDED.level_name,
+  min_xp = EXCLUDED.min_xp,
+  min_verified_supports = EXCLUDED.min_verified_supports,
+  min_reputation = EXCLUDED.min_reputation,
+  min_unique_users = EXCLUDED.min_unique_users,
+  min_unique_platforms = EXCLUDED.min_unique_platforms,
+  perks = EXCLUDED.perks;
+
+CREATE TABLE IF NOT EXISTS public.experience_ledger (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL,
+  source_id UUID,
+  xp_delta INT NOT NULL,
+  reason TEXT NOT NULL,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_exp_user_source UNIQUE (user_id, source_type, source_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.reputation_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  score_delta NUMERIC(6,1) NOT NULL,
+  source_id UUID,
+  reason TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.support_verifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  task_id UUID NOT NULL REFERENCES public.campaign_tasks(id) ON DELETE CASCADE UNIQUE,
+  giver_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  receiver_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  campaign_id UUID REFERENCES public.campaigns(id) ON DELETE SET NULL,
+  platform TEXT NOT NULL,
+  verification_method TEXT NOT NULL CHECK (verification_method IN ('RECIPIENT_CONFIRMATION', 'USER_EVIDENCE', 'URL_CHECK', 'PLATFORM_API', 'MANUAL_REVIEW', 'AUTOMATED_SIGNAL', 'MULTI_SIGNAL')),
+  verification_strength INT NOT NULL DEFAULT 3 CHECK (verification_strength BETWEEN 1 AND 5),
+  evidence_type TEXT CHECK (evidence_type IN ('SCREENSHOT', 'URL', 'TEXT_CONFIRMATION', 'PLATFORM_REFERENCE', 'MANUAL_REVIEW')),
+  evidence_url TEXT,
+  evidence_note TEXT,
+  stars INT NOT NULL DEFAULT 5 CHECK (stars BETWEEN 1 AND 5),
+  feedback TEXT,
+  is_certified BOOLEAN NOT NULL DEFAULT TRUE,
+  certified_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.badges (
+  code TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon TEXT NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('MILESTONE', 'QUALITY', 'DIVERSITY', 'SPECIAL')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.badges (code, name, description, icon, category)
+VALUES
+  ('PRIMER_ABRAZO', 'Primer Abrazo', 'Completó exitosamente su primera colaboración certificada.', 'Sparkles', 'MILESTONE'),
+  ('10_COLABORACIONES', '10 Colaboraciones', 'Alcanzó 10 ayudas verificadas por otros creadores.', 'Award', 'MILESTONE'),
+  ('50_COLABORACIONES', '50 Colaboraciones', 'Consolidó 50 ayudas comunitarias verificadas.', 'Medal', 'MILESTONE'),
+  ('100_COLABORACIONES', 'Centenario de Apoyo', 'Superó las 100 colaboraciones humanas certificadas.', 'Trophy', 'MILESTONE'),
+  ('COLABORADOR_CONFIABLE', 'Colaborador Confiable', 'Mantiene un índice de validación superior al 95% y reputación > 300.', 'ShieldCheck', 'QUALITY'),
+  ('APOYO_MULTIPLATAFORMA', 'Apoyo Multiplataforma', 'Ha ayudado en al menos 4 redes sociales distintas.', 'Globe', 'DIVERSITY'),
+  ('AYUDA_A_NUEVOS_USUARIOS', 'Impulsor de Nuevos', 'Ayudó a más de 5 creadores de Nivel 1 a darse a conocer.', 'UserPlus', 'MILESTONE'),
+  ('ALTA_CALIDAD', 'Alta Calidad', 'Recibió calificación perfecta de 5 estrellas en 20 o más tareas consecutivas.', 'Star', 'QUALITY'),
+  ('BUENA_CONDUCTA', 'Buena Conducta', 'Cero alertas de fraude y comportamiento comunitario intachable.', 'HeartHandshake', 'QUALITY'),
+  ('REFERENTE', 'Referente Comunitario', 'Alcanzó el Nivel 5 o superior con diversidad sobresaliente.', 'Flame', 'SPECIAL')
+ON CONFLICT (code) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.user_badges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  badge_code TEXT NOT NULL REFERENCES public.badges(code) ON DELETE CASCADE,
+  awarded_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_user_badge UNIQUE (user_id, badge_code)
+);
+
+CREATE TABLE IF NOT EXISTS public.disputes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  task_id UUID NOT NULL REFERENCES public.campaign_tasks(id) ON DELETE CASCADE,
+  reporter_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  accused_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  evidence_url TEXT,
+  status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'UNDER_REVIEW', 'RESOLVED_HELPER', 'RESOLVED_RECIPIENT', 'REJECTED', 'ESCALATED')),
+  resolution_notes TEXT,
+  resolved_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.system_config (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.level_requirements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.experience_ledger ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reputation_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.support_verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.disputes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read level_requirements" ON public.level_requirements FOR SELECT USING (true);
+CREATE POLICY "Owner read experience_ledger" ON public.experience_ledger FOR SELECT USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
+CREATE POLICY "Owner read reputation_events" ON public.reputation_events FOR SELECT USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
+CREATE POLICY "Public read support_verifications" ON public.support_verifications FOR SELECT USING (true);
+CREATE POLICY "Public read badges" ON public.badges FOR SELECT USING (true);
+CREATE POLICY "Public read user_badges" ON public.user_badges FOR SELECT USING (true);
+CREATE POLICY "Public read system_config" ON public.system_config FOR SELECT USING (true);
+CREATE POLICY "Participants and admin read disputes" ON public.disputes FOR SELECT USING (
+  auth.uid() = reporter_id OR auth.uid() = accused_id OR public.is_admin(auth.uid())
+);
+

@@ -1,5 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import {
+  supabase,
+  isSupabaseConfigured,
+  fetchLevelRequirements,
+  fetchUserExperienceLedger,
+  fetchUserReputationEvents,
+  fetchUserBadges,
+  fetchSupportVerifications,
+  fetchDisputes,
+  callCompleteVerifiedTask,
+  callReportTaskDispute,
+  callResolveDispute
+} from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import {
   CampaignTask,
@@ -12,8 +24,118 @@ import {
   AuditLogEntry,
   FraudEvent,
   RiskLevel,
-  VerificationStatus
+  VerificationStatus,
+  LevelRequirement,
+  ExperienceEntry,
+  ReputationEvent,
+  SupportVerification,
+  Badge,
+  Dispute,
+  DisputeStatus
 } from '../types';
+
+export const OFFICIAL_LEVEL_REQUIREMENTS: LevelRequirement[] = [
+  {
+    level_number: 1,
+    level_name: 'NUEVO',
+    min_xp: 0,
+    min_verified_supports: 0,
+    min_reputation: 0,
+    min_unique_users: 0,
+    min_unique_platforms: 0,
+    perks: ['Acceso básico a lobby', 'Creación de hasta 1 campaña activa']
+  },
+  {
+    level_number: 2,
+    level_name: 'COLABORADOR',
+    min_xp: 100,
+    min_verified_supports: 3,
+    min_reputation: 100,
+    min_unique_users: 2,
+    min_unique_platforms: 1,
+    perks: ['Acceso a tareas prioritarias', 'Insignia de Colaborador en perfil']
+  },
+  {
+    level_number: 3,
+    level_name: 'APOYADOR',
+    min_xp: 300,
+    min_verified_supports: 10,
+    min_reputation: 200,
+    min_unique_users: 3,
+    min_unique_platforms: 1,
+    perks: ['Hasta 3 campañas activas', 'Prioridad de revisión de evidencias']
+  },
+  {
+    level_number: 4,
+    level_name: 'IMPULSOR',
+    min_xp: 650,
+    min_verified_supports: 20,
+    min_reputation: 350,
+    min_unique_users: 5,
+    min_unique_platforms: 2,
+    perks: ['Mayor visibilidad en el lobby', 'Participación en batallas comunitarias']
+  },
+  {
+    level_number: 5,
+    level_name: 'REFERENTE',
+    min_xp: 1200,
+    min_verified_supports: 40,
+    min_reputation: 500,
+    min_unique_users: 10,
+    min_unique_platforms: 2,
+    perks: ['Distintivo Referente dorado', 'Hasta 5 campañas activas simultáneas']
+  },
+  {
+    level_number: 6,
+    level_name: 'GUÍA',
+    min_xp: 2000,
+    min_verified_supports: 70,
+    min_reputation: 650,
+    min_unique_users: 15,
+    min_unique_platforms: 3,
+    perks: ['Capacidad de sugerir directrices', 'Multiplicador leve de diversidad']
+  },
+  {
+    level_number: 7,
+    level_name: 'EMBAJADOR',
+    min_xp: 3200,
+    min_verified_supports: 110,
+    min_reputation: 750,
+    min_unique_users: 25,
+    min_unique_platforms: 3,
+    perks: ['Insignia de Embajador oficial', 'Acceso a canales de prueba anticipada']
+  },
+  {
+    level_number: 8,
+    level_name: 'LÍDER COMUNITARIO',
+    min_xp: 5000,
+    min_verified_supports: 160,
+    min_reputation: 825,
+    min_unique_users: 40,
+    min_unique_platforms: 4,
+    perks: ['Prioridad máxima en ranking', 'Voto consultivo en disputas públicas']
+  },
+  {
+    level_number: 9,
+    level_name: 'MAESTRO DE APOYO',
+    min_xp: 7500,
+    min_verified_supports: 225,
+    min_reputation: 900,
+    min_unique_users: 60,
+    min_unique_platforms: 4,
+    perks: ['Distintivo Maestro de Apoyo', 'Límites ampliados de campañas']
+  },
+  {
+    level_number: 10,
+    level_name: 'PULSO SOCIAL',
+    min_xp: 10500,
+    min_verified_supports: 300,
+    min_reputation: 950,
+    min_unique_users: 80,
+    min_unique_platforms: 5,
+    perks: ['Máximo nivel de prestigio comunitario', 'Reconocimiento permanente en Salón de Honor']
+  }
+];
 
 interface OlaSocialContextType {
   socialProfiles: SocialProfile[];
@@ -23,6 +145,12 @@ interface OlaSocialContextType {
   activeBattles: BattleEvent[];
   auditLogs: AuditLogEntry[];
   fraudEvents: FraudEvent[];
+  levelRequirements: LevelRequirement[];
+  experienceLedger: ExperienceEntry[];
+  reputationEvents: ReputationEvent[];
+  supportVerifications: SupportVerification[];
+  badges: Badge[];
+  disputes: Dispute[];
   onlineUsersCount: number;
   newUsersTodayCount: number;
   peopleDiscoveringCount: number;
@@ -60,13 +188,24 @@ interface OlaSocialContextType {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   pledgeBattle: (battleId: string, creatorId: string) => { success: boolean; message: string };
+  reportDispute: (
+    taskId: string,
+    reason: string,
+    evidenceUrl?: string
+  ) => Promise<{ success: boolean; message: string }>;
+  resolveDispute: (
+    disputeId: string,
+    resolution: DisputeStatus,
+    notes: string
+  ) => Promise<{ success: boolean; message: string }>;
+  updateLevelRequirements: (reqs: LevelRequirement[]) => Promise<void>;
   refreshAllData: () => Promise<void>;
 }
 
 const OlaSocialContext = createContext<OlaSocialContextType | undefined>(undefined);
 
 export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, refreshProfile } = useAuth();
 
   const [socialProfiles, setSocialProfiles] = useState<SocialProfile[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -75,6 +214,12 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeBattles, setActiveBattles] = useState<BattleEvent[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [fraudEvents, setFraudEvents] = useState<FraudEvent[]>([]);
+  const [levelRequirements, setLevelRequirements] = useState<LevelRequirement[]>(OFFICIAL_LEVEL_REQUIREMENTS);
+  const [experienceLedger, setExperienceLedger] = useState<ExperienceEntry[]>([]);
+  const [reputationEvents, setReputationEvents] = useState<ReputationEvent[]>([]);
+  const [supportVerifications, setSupportVerifications] = useState<SupportVerification[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
 
   const [onlineUsersCount, setOnlineUsersCount] = useState<number>(1);
   const [newUsersTodayCount, setNewUsersTodayCount] = useState<number>(0);
@@ -101,7 +246,7 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .order('created_at', { ascending: false });
       if (!campError && campaignsData) setCampaigns(campaignsData as Campaign[]);
 
-      // 3. User Social Profiles & Notifications
+      // 3. User Social Profiles & Notifications & Personal Ledger/Reputation
       if (user) {
         const { data: profilesData } = await supabase
           .from('social_profiles')
@@ -115,6 +260,15 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         if (notifsData) setNotifications(notifsData as NotificationItem[]);
+
+        const ledgerData = await fetchUserExperienceLedger(user.id);
+        if (ledgerData.length > 0) setExperienceLedger(ledgerData);
+
+        const repData = await fetchUserReputationEvents(user.id);
+        if (repData.length > 0) setReputationEvents(repData);
+
+        const badgesData = await fetchUserBadges(user.id);
+        if (badgesData.length > 0) setBadges(badgesData);
       }
 
       // 4. Battles
@@ -124,7 +278,21 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .order('created_at', { ascending: false });
       if (battlesData) setActiveBattles(battlesData as BattleEvent[]);
 
-      // 5. Admin data
+      // 5. Level Requirements
+      const reqsData = await fetchLevelRequirements();
+      if (reqsData.length > 0) {
+        setLevelRequirements(reqsData);
+      }
+
+      // 6. Support Verifications (Abrazos Certificados)
+      const verifs = await fetchSupportVerifications(60);
+      if (verifs.length > 0) setSupportVerifications(verifs);
+
+      // 7. Disputes
+      const dispData = await fetchDisputes();
+      if (dispData.length > 0) setDisputes(dispData);
+
+      // 8. Admin data
       if (isAdmin) {
         const { data: auditData } = await supabase
           .from('admin_audit_log')
@@ -140,7 +308,7 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (fraudData) setFraudEvents(fraudData as FraudEvent[]);
       }
 
-      // 6. Real Active User Count from Profiles
+      // 9. Real Active User Count from Profiles
       const { count: userCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -203,6 +371,28 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           } else if (payload.eventType === 'UPDATE') {
             setActiveBattles((prev) =>
               prev.map((b) => (b.id === payload.new.id ? (payload.new as BattleEvent) : b))
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_verifications' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setSupportVerifications((prev) => [payload.new as SupportVerification, ...prev]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'disputes' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setDisputes((prev) => [payload.new as Dispute, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setDisputes((prev) =>
+              prev.map((d) => (d.id === payload.new.id ? (payload.new as Dispute) : d))
             );
           }
         }
@@ -368,6 +558,39 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, message: 'Solo el creador receptor o un moderador puede validar este abrazo.' };
     }
 
+    // Try transactional server-side RPC first
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const rpcResult = await callCompleteVerifiedTask(taskId, isValid, feedback);
+        if (rpcResult && rpcResult.success) {
+          // Refresh profile, tasks, and verifications
+          await refreshProfile();
+          const { data: updatedTaskData } = await supabase
+            .from('campaign_tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+          if (updatedTaskData) {
+            setTasks((prev) => prev.map((t) => (t.id === taskId ? (updatedTaskData as CampaignTask) : t)));
+          }
+
+          const verifs = await fetchSupportVerifications(60);
+          if (verifs.length > 0) setSupportVerifications(verifs);
+
+          return {
+            success: true,
+            message: isValid
+              ? `¡Abrazo certificado con éxito! +${rpcResult.xp_awarded || 30} XP otorgados.`
+              : 'Abrazo marcado como no verificado.'
+          };
+        }
+      } catch (rpcErr) {
+        console.warn('RPC complete_verified_task failed or not yet deployed, falling back to direct update:', rpcErr);
+      }
+    }
+
+    // Fallback direct execution
     const nextStatus = isValid ? TaskStatus.VERIFIED : TaskStatus.REJECTED;
 
     const updatedTask: CampaignTask = {
@@ -384,8 +607,23 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .eq('id', taskId);
 
       if (task.assigned_user_id) {
-        // Record rating if valid
         if (isValid) {
+          // Insert Support Verification
+          await supabase.from('support_verifications').insert({
+            task_id: taskId,
+            campaign_id: task.campaign_id,
+            giver_id: task.assigned_user_id,
+            receiver_id: task.creator_id,
+            platform: task.platform,
+            action_type: task.action_type,
+            evidence_url: task.evidence_url,
+            is_valid: true,
+            feedback: feedback || 'Abrazo legítimo certificado',
+            xp_awarded: 30,
+            reputation_delta: 2.5
+          });
+
+          // Insert rating
           await supabase.from('task_ratings').insert({
             task_id: taskId,
             giver_id: task.assigned_user_id,
@@ -394,19 +632,25 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             feedback: feedback || 'Abrazo legítimo y verificado'
           });
 
-          // Increment hugs_verified and stars_count on giver profile
+          // Update giver profile
           const { data: giverProfile } = await supabase
             .from('profiles')
-            .select('hugs_verified, stars_count')
+            .select('hugs_verified, stars_count, experience_points, level_number, reputation_score')
             .eq('id', task.assigned_user_id)
             .single();
 
           if (giverProfile) {
+            const nextXP = (giverProfile.experience_points || 0) + 30;
+            const nextVerified = (giverProfile.hugs_verified || 0) + 1;
+            const nextRep = Math.min(1000, (giverProfile.reputation_score || 100) + 2.5);
+
             await supabase
               .from('profiles')
               .update({
-                hugs_verified: (giverProfile.hugs_verified || 0) + 1,
-                stars_count: (giverProfile.stars_count || 0) + 5
+                hugs_verified: nextVerified,
+                stars_count: (giverProfile.stars_count || 0) + 5,
+                experience_points: nextXP,
+                reputation_score: nextRep
               })
               .eq('id', task.assigned_user_id);
           }
@@ -416,19 +660,116 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await supabase.from('notifications').insert({
           user_id: task.assigned_user_id,
           type: isValid ? NotificationType.TASK_VERIFIED : NotificationType.TASK_REJECTED,
-          title: isValid ? '¡Abrazo Validado!' : 'Abrazo No Confirmado',
+          title: isValid ? '¡Abrazo Certificado!' : 'Abrazo No Confirmado',
           message: isValid
-            ? `Tu abrazo hacia ${task.creator_name} fue verificado. Ganaste 5 estrellas.`
+            ? `Tu abrazo hacia ${task.creator_name} fue verificado. Ganaste +30 XP y reputación.`
             : `Tu evidencia no pudo ser confirmada: ${feedback || 'Interacción no encontrada'}.`,
           read: false
         });
       }
     }
 
+    await refreshProfile();
     return {
       success: true,
-      message: isValid ? '¡Abrazo validado y estrellas concedidas!' : 'Abrazo marcado como no verificado.'
+      message: isValid ? '¡Abrazo validado y experiencia concedida!' : 'Abrazo marcado como no verificado.'
     };
+  };
+
+  const reportDispute = async (
+    taskId: string,
+    reason: string,
+    evidenceUrl?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    if (!user) return { success: false, message: 'Debes iniciar sesión para reportar una disputa.' };
+
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return { success: false, message: 'Tarea no encontrada.' };
+
+    const opponentId = user.id === task.creator_id ? (task.assigned_user_id || 'system') : task.creator_id;
+
+    // Call RPC or insert
+    const rpcRes = await callReportTaskDispute(taskId, reason, evidenceUrl);
+
+    // Update local task status to DISPUTED
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: TaskStatus.DISPUTED } : t))
+    );
+
+    // Also insert dispute record directly if needed
+    if (isSupabaseConfigured && supabase) {
+      const { data: newDisp } = await supabase
+        .from('disputes')
+        .insert({
+          task_id: taskId,
+          reporter_id: user.id,
+          accused_id: opponentId,
+          reason,
+          evidence_url: evidenceUrl,
+          status: 'OPEN'
+        })
+        .select()
+        .single();
+
+      if (newDisp) {
+        setDisputes((prev) => [newDisp as Dispute, ...prev]);
+      }
+    }
+
+    return { success: true, message: 'Disputa registrada. Un moderador revisará ambas evidencias.' };
+  };
+
+  const resolveDispute = async (
+    disputeId: string,
+    resolution: DisputeStatus,
+    notes: string
+  ): Promise<{ success: boolean; message: string }> => {
+    if (!user || !isAdmin) {
+      return { success: false, message: 'Solo los administradores o moderadores pueden resolver disputas.' };
+    }
+
+    const rpcRes = await callResolveDispute(disputeId, resolution, notes);
+
+    setDisputes((prev) =>
+      prev.map((d) =>
+        d.id === disputeId
+          ? {
+              ...d,
+              status: resolution,
+              resolution_notes: notes,
+              resolved_by: user.id,
+              resolved_at: new Date().toISOString()
+            }
+          : d
+      )
+    );
+
+    if (isSupabaseConfigured && supabase) {
+      await supabase
+        .from('disputes')
+        .update({
+          status: resolution,
+          resolution_notes: notes,
+          resolved_by: user.id,
+          resolved_at: new Date().toISOString()
+        })
+        .eq('id', disputeId);
+    }
+
+    await loadDataFromSupabase();
+    return { success: true, message: rpcRes.message || 'Disputa resuelta correctamente.' };
+  };
+
+  const updateLevelRequirements = async (reqs: LevelRequirement[]) => {
+    setLevelRequirements(reqs);
+
+    if (isSupabaseConfigured && supabase && isAdmin) {
+      for (const req of reqs) {
+        await supabase
+          .from('level_requirements')
+          .upsert(req, { onConflict: 'level_number' });
+      }
+    }
   };
 
   const createCampaign = async (
@@ -663,6 +1004,12 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         activeBattles,
         auditLogs,
         fraudEvents,
+        levelRequirements,
+        experienceLedger,
+        reputationEvents,
+        supportVerifications,
+        badges,
+        disputes,
         onlineUsersCount,
         newUsersTodayCount,
         peopleDiscoveringCount,
@@ -678,6 +1025,9 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         markNotificationAsRead,
         markAllNotificationsAsRead,
         pledgeBattle,
+        reportDispute,
+        resolveDispute,
+        updateLevelRequirements,
         refreshAllData
       }}
     >

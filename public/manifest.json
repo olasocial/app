@@ -2,19 +2,20 @@
   "name": "Ola Social",
   "short_name": "Ola Social",
   "description": "Abrazos que conectan personas — Plataforma de descubrimiento social auténtico",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0284c7",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/logo.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

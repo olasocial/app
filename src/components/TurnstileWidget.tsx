@@ -40,109 +40,187 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  const isRenderingRef = useRef<boolean>(false);
+  const renderWidgetRef = useRef<(() => void) | null>(null);
   const [state, setState] = useState<TurnstileState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Store latest callbacks in refs to avoid re-triggering effect on parent re-renders
+  const callbacksRef = useRef({
+    onVerifySuccess,
+    onVerifyExpired,
+    onVerifyError
+  });
+
   useEffect(() => {
-    let isMounted = true;
+    callbacksRef.current = {
+      onVerifySuccess,
+      onVerifyExpired,
+      onVerifyError
+    };
+  });
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    let loadHandler: (() => void) | null = null;
+    let scriptElement: HTMLScriptElement | null = null;
+
+    const safeRemoveWidget = () => {
+      const id = widgetIdRef.current;
+      if (!id) return;
+      widgetIdRef.current = null;
+
+      if (typeof window !== 'undefined' && window.turnstile && typeof window.turnstile.remove === 'function') {
+        try {
+          if (containerRef.current && document.body.contains(containerRef.current)) {
+            window.turnstile.remove(id);
+          }
+        } catch {
+          // Suppress benign internal turnstile DOM detachment warnings
+        }
+      }
+    };
 
     const renderWidget = () => {
-      if (!containerRef.current || !window.turnstile) return;
+      if (!isMountedRef.current || !containerRef.current || !window.turnstile) return;
+      if (widgetIdRef.current || isRenderingRef.current) return;
 
+      isRenderingRef.current = true;
       try {
-        if (widgetIdRef.current) {
-          window.turnstile.remove(widgetIdRef.current);
-          widgetIdRef.current = null;
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
         }
 
         const id = window.turnstile.render(containerRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: 'light',
           callback: async (token: string) => {
-            if (!isMounted) return;
+            if (!isMountedRef.current) return;
             setState('VERIFYING');
             setErrorMessage(null);
 
-            // Server-side verification
             const verifyResult = await verifyTurnstileTokenServerSide(token);
-            if (!isMounted) return;
+            if (!isMountedRef.current) return;
 
             if (verifyResult.success) {
               setState('VERIFIED');
-              onVerifySuccess(token);
+              callbacksRef.current.onVerifySuccess(token);
             } else {
               setState('ERROR');
               const err = verifyResult.message || 'No pudimos verificar que eres una persona.';
               setErrorMessage(err);
-              onVerifyError(err);
+              callbacksRef.current.onVerifyError(err);
             }
           },
           'expired-callback': () => {
-            if (!isMounted) return;
+            if (!isMountedRef.current) return;
             setState('EXPIRED');
             setErrorMessage('La verificación humana expiró. Completa nuevamente la verificación.');
-            onVerifyExpired();
+            callbacksRef.current.onVerifyExpired();
           },
-          'error-callback': (err: any) => {
-            if (!isMounted) return;
+          'error-callback': () => {
+            if (!isMountedRef.current) return;
             setState('ERROR');
             const errText = 'Error en el widget de verificación humana. Inténtalo de nuevo.';
             setErrorMessage(errText);
-            onVerifyError(errText);
+            callbacksRef.current.onVerifyError(errText);
           }
         });
 
         widgetIdRef.current = id;
       } catch (e) {
-        console.error('Turnstile render error:', e);
+        console.warn('Turnstile render warning:', e);
+      } finally {
+        isRenderingRef.current = false;
       }
     };
 
-    // Check if turnstile script is already present
-    const existingScript = document.querySelector('script[src*="turnstile/v0/api.js"]');
+    renderWidgetRef.current = renderWidget;
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[src*="turnstile/v0/api.js"]');
+
     if (window.turnstile) {
-      renderWidget();
+      if (typeof (window.turnstile as any).ready === 'function') {
+        (window.turnstile as any).ready(() => {
+          if (isMountedRef.current) renderWidget();
+        });
+      } else {
+        renderWidget();
+      }
     } else if (!existingScript) {
       const script = document.createElement('script');
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       script.async = true;
       script.defer = true;
-      script.onload = () => {
-        if (isMounted) renderWidget();
+      scriptElement = script;
+
+      loadHandler = () => {
+        if (isMountedRef.current) {
+          if (window.turnstile && typeof (window.turnstile as any).ready === 'function') {
+            (window.turnstile as any).ready(() => {
+              if (isMountedRef.current) renderWidget();
+            });
+          } else {
+            renderWidget();
+          }
+        }
       };
+      script.addEventListener('load', loadHandler);
+
       script.onerror = () => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setState('ERROR');
           setErrorMessage('No se pudo cargar Cloudflare Turnstile. Comprueba tu conexión.');
-          onVerifyError('No se pudo cargar Cloudflare Turnstile.');
+          callbacksRef.current.onVerifyError('No se pudo cargar Cloudflare Turnstile.');
         }
       };
       document.head.appendChild(script);
     } else {
-      // Script is loading
-      existingScript.addEventListener('load', () => {
-        if (isMounted) renderWidget();
-      });
+      scriptElement = existingScript;
+      loadHandler = () => {
+        if (isMountedRef.current) {
+          if (window.turnstile && typeof (window.turnstile as any).ready === 'function') {
+            (window.turnstile as any).ready(() => {
+              if (isMountedRef.current) renderWidget();
+            });
+          } else {
+            renderWidget();
+          }
+        }
+      };
+      existingScript.addEventListener('load', loadHandler);
     }
 
     return () => {
-      isMounted = false;
-      if (widgetIdRef.current && window.turnstile) {
-        try {
-          window.turnstile.remove(widgetIdRef.current);
-        } catch {
-          // ignore cleanup errors
-        }
+      isMountedRef.current = false;
+      if (scriptElement && loadHandler) {
+        scriptElement.removeEventListener('load', loadHandler);
       }
+      safeRemoveWidget();
     };
-  }, [onVerifySuccess, onVerifyExpired, onVerifyError]);
+  }, []);
 
   const handleManualRetry = () => {
     setState('IDLE');
     setErrorMessage(null);
     if (widgetIdRef.current && window.turnstile) {
-      window.turnstile.reset(widgetIdRef.current);
+      try {
+        window.turnstile.reset(widgetIdRef.current);
+        return;
+      } catch {
+        // if reset fails, safely remove before re-rendering
+        if (typeof window !== 'undefined' && window.turnstile && typeof window.turnstile.remove === 'function') {
+          try {
+            window.turnstile.remove(widgetIdRef.current);
+          } catch {
+            // ignore
+          }
+        }
+        widgetIdRef.current = null;
+      }
     }
+    renderWidgetRef.current?.();
   };
 
   return (
