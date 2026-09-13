@@ -32,12 +32,14 @@ import { OlaLogo } from './OlaLogo';
 interface LobbyViewProps {
   onOpenCreateCampaign: () => void;
   onOpenSocialProfiles: () => void;
+  onOpenInvitations?: () => void;
   isScrolled: boolean;
 }
 
 export const LobbyView: React.FC<LobbyViewProps> = ({
   onOpenCreateCampaign,
   onOpenSocialProfiles,
+  onOpenInvitations,
   isScrolled
 }) => {
   const { user } = useAuth();
@@ -393,6 +395,37 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Real Invitations Banner */}
+      {user && (
+        <div className="bg-gradient-to-r from-teal-900 via-slate-900 to-sky-950 rounded-3xl p-5 sm:p-6 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-teal-800/40">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0 border border-teal-500/30">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-extrabold text-sm sm:text-base text-white">
+                  Invita Creadores Genuinos y Gana Reputación
+                </h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-800/80 text-teal-200 border border-teal-600/40">
+                  +25 pts por validado
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Tu código de creador es <strong className="text-amber-300 font-mono">{user.invite_code || 'OLA-COMUNIDAD'}</strong>. Comparte tu enlace y expande la red.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenInvitations}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold text-xs shadow-xs transition-all whitespace-nowrap cursor-pointer"
+          >
+            Gestionar Invitaciones
+          </button>
         </div>
       )}
 

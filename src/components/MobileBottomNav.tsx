@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Share2, Award, Swords, Trophy, Shield, Sparkles } from 'lucide-react';
+import { Home, Share2, Award, Swords, Trophy, Shield, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface MobileBottomNavProps {
@@ -74,7 +74,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
         <button
           onClick={() => onSelectTab('ranking')}
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-1 py-1 rounded-xl transition-all ${
+          className={`flex flex-col items-center justify-center min-w-[50px] min-h-[44px] px-1 py-1 rounded-xl transition-all ${
             currentTab === 'ranking'
               ? 'text-amber-600 font-bold'
               : 'text-slate-500 hover:text-slate-900'
@@ -82,6 +82,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <Trophy className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] leading-tight">Ranking</span>
+        </button>
+
+        <button
+          onClick={() => onSelectTab('invitations')}
+          className={`flex flex-col items-center justify-center min-w-[50px] min-h-[44px] px-1 py-1 rounded-xl transition-all ${
+            currentTab === 'invitations'
+              ? 'text-teal-600 font-bold'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Users className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] leading-tight">Invitar</span>
         </button>
 
         {isAdmin && (

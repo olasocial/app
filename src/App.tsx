@@ -6,6 +6,7 @@ import { LobbyView } from './components/LobbyView';
 import { SocialProfilesManager } from './components/SocialProfilesManager';
 import { BattlesView } from './components/BattlesView';
 import { RankingView } from './components/RankingView';
+import { InvitationsView } from './components/InvitationsView';
 import { SecurityCenter } from './components/SecurityCenter';
 import { AdminPanel } from './components/AdminPanel';
 import { LevelsAndProgressView } from './components/LevelsAndProgressView';
@@ -160,6 +161,13 @@ const MainAppContent: React.FC = () => {
                 setCurrentTab('profiles');
               }
             }}
+            onOpenInvitations={() => {
+              if (!user) {
+                setIsLoginModalOpen(true);
+              } else {
+                setCurrentTab('invitations');
+              }
+            }}
             isScrolled={isScrolled}
           />
         )}
@@ -169,6 +177,8 @@ const MainAppContent: React.FC = () => {
         {currentTab === 'battles' && <BattlesView />}
 
         {currentTab === 'ranking' && <RankingView />}
+
+        {currentTab === 'invitations' && <InvitationsView />}
 
         {currentTab === 'progress' && <LevelsAndProgressView />}
 

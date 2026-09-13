@@ -159,6 +159,13 @@ export interface UserProfile {
   is_18_confirmed: boolean;
   terms_accepted_at: string;
   mfa_enabled: boolean;
+  onboarding_completed?: boolean;
+  age_confirmed_at?: string;
+  profile_completed_at?: string;
+  invite_code?: string;
+  invited_by?: string;
+  invitation_score?: number;
+  reputation_status?: string;
   created_at: string;
   updated_at: string;
 }
@@ -417,5 +424,49 @@ export interface SystemConfigItem {
   description?: string;
   updated_at?: string;
 }
+
+export type InvitationStatus =
+  | 'pending'
+  | 'registered'
+  | 'verified'
+  | 'active'
+  | 'invalid'
+  | 'revoked';
+
+export interface Invitation {
+  id: string;
+  inviter_user_id: string;
+  invited_user_id: string;
+  invite_code: string;
+  status: InvitationStatus;
+  reputation_awarded: number;
+  created_at: string;
+  verified_at?: string;
+  activated_at?: string;
+  inviter_email?: string;
+  inviter_name?: string;
+  invited_email?: string;
+  invited_name?: string;
+}
+
+export interface MfaFactor {
+  id: string;
+  friendly_name?: string;
+  factor_type: 'totp';
+  status: 'verified' | 'unverified';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MfaEnrollResult {
+  id: string;
+  type: 'totp';
+  totp: {
+    qr_code: string;
+    secret: string;
+    uri: string;
+  };
+}
+
 
 

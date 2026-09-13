@@ -1,23 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Trophy, Star, Heart, Award, ShieldCheck, Sparkles, Users, Loader2 } from 'lucide-react';
-import { UserProfile, UserLevel } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Trophy,
+  Star,
+  Heart,
+  Award,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Loader2,
+  HelpCircle,
+  X,
+  TrendingUp,
+  Share2
+} from 'lucide-react';
+import { UserProfile } from '../types';
 import { fetchPublicRankings } from '../services/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
 export const RankingView: React.FC = () => {
   const { user } = useAuth();
+  const [activeCategory, setActiveCategory] = useState<'reputacion' | 'abrazadores' | 'creadores' | 'invitadores'>('reputacion');
   const [rankingUsers, setRankingUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showFormulaModal, setShowFormulaModal] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
     const loadRankings = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchPublicRankings();
+        const data = await fetchPublicRankings(activeCategory);
         if (isMounted) {
-          // If logged in user exists and isn't yet in list, include them if they have stats
           if (data.length === 0 && user) {
             setRankingUsers([user]);
           } else {
@@ -36,7 +50,7 @@ export const RankingView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [activeCategory, user]);
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return 'bg-amber-400 text-amber-950 ring-4 ring-amber-100 shadow-md';
@@ -58,15 +72,63 @@ export const RankingView: React.FC = () => {
             Ranking de Creadores y Reputación
           </h2>
           <p className="text-amber-100 text-xs sm:text-sm mt-1 max-w-xl">
-            Calculado exclusivamente a partir de abrazos humanos verificados, sin compra de seguidores ni granjas automatizadas.
+            Calculado exclusivamente a partir de colaboraciones humanas verificadas en Supabase, sin bots ni cuentas fantasmas.
           </p>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center shrink-0">
-          <div className="text-xs text-amber-100 font-semibold">Creadores Activos</div>
-          <div className="text-3xl font-black mt-0.5">{rankingUsers.length}</div>
-          <div className="text-[10px] text-amber-200 mt-0.5">Comunidad 100% Real</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFormulaModal(true)}
+            className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-white/20"
+          >
+            <HelpCircle className="w-4 h-4" />
+            <span>Transparencia de Puntos</span>
+          </button>
         </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex rounded-2xl bg-slate-100 p-1.5 text-xs font-bold text-slate-600 overflow-x-auto">
+        <button
+          onClick={() => setActiveCategory('reputacion')}
+          className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeCategory === 'reputacion'
+              ? 'bg-white text-slate-900 shadow-xs font-black'
+              : 'hover:text-slate-900'
+          }`}
+        >
+          Top Reputación
+        </button>
+        <button
+          onClick={() => setActiveCategory('abrazadores')}
+          className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeCategory === 'abrazadores'
+              ? 'bg-white text-slate-900 shadow-xs font-black'
+              : 'hover:text-slate-900'
+          }`}
+        >
+          Top Abrazadores
+        </button>
+        <button
+          onClick={() => setActiveCategory('creadores')}
+          className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeCategory === 'creadores'
+              ? 'bg-white text-slate-900 shadow-xs font-black'
+              : 'hover:text-slate-900'
+          }`}
+        >
+          Top Creadores
+        </button>
+        <button
+          onClick={() => setActiveCategory('invitadores')}
+          className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeCategory === 'invitadores'
+              ? 'bg-white text-slate-900 shadow-xs font-black'
+              : 'hover:text-slate-900'
+          }`}
+        >
+          Top Invitadores
+        </button>
       </div>
 
       {/* Loading state */}
@@ -82,9 +144,9 @@ export const RankingView: React.FC = () => {
             <Trophy className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-slate-800">Aún no hay creadores en el ranking</h3>
+            <h3 className="text-lg font-bold text-slate-800">Aún no hay creadores en esta categoría</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Sé el primero en vincular tus perfiles sociales, publicar o completar campañas de abrazos legítimos y ganar estrellas.
+              Colabora en campañas comunitarias o invita nuevos miembros para aparecer en el podio.
             </p>
           </div>
         </div>
@@ -94,7 +156,14 @@ export const RankingView: React.FC = () => {
           <div className="divide-y divide-slate-100">
             {rankingUsers.map((u, index) => {
               const rank = index + 1;
-              const weightedScore = (u.hugs_verified || 0) * 10 + (u.stars_count || 0);
+              const primaryStat =
+                activeCategory === 'abrazadores'
+                  ? `${u.hugs_verified || 0} validados`
+                  : activeCategory === 'creadores'
+                  ? `${u.campaigns_created || 0} campañas`
+                  : activeCategory === 'invitadores'
+                  ? `${u.invitation_score || 0} pts`
+                  : `${(u.reputation_score !== undefined ? u.reputation_score : 100).toFixed(1)} pts`;
 
               return (
                 <div
@@ -154,13 +223,85 @@ export const RankingView: React.FC = () => {
                     </div>
 
                     <div className="pl-3 border-l border-slate-200 sm:border-slate-100 text-right">
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Score</span>
-                      <span className="font-black text-rose-600 text-sm sm:text-base">{weightedScore}</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Destacado</span>
+                      <span className="font-black text-rose-600 text-xs sm:text-sm">{primaryStat}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Formula Transparency Modal */}
+      {showFormulaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 text-left space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-teal-600" />
+                <h3 className="font-extrabold text-slate-900 text-base">
+                  Fórmula Oficial de Reputación
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowFormulaModal(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              La reputación en OLA SOCIAL es un puntaje dinámico entre 0 y 1000 puntos gobernado por triggers y funciones RPC en la base de datos Supabase:
+            </p>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="font-bold text-slate-800">1. Puntuación Base Inicial</div>
+                <div className="text-slate-600 text-[11px] mt-0.5">
+                  Todo creador verificado comienza con <strong>100 puntos</strong> de confianza base.
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="font-bold text-teal-800">2. Abrazos y Tareas Validadas</div>
+                <div className="text-slate-600 text-[11px] mt-0.5">
+                  Cada apoyo corroborado por captura y tiempo de permanencia suma <strong>+10 puntos</strong> a tu reputación.
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="font-bold text-amber-800">3. Calificaciones y Estrellas</div>
+                <div className="text-slate-600 text-[11px] mt-0.5">
+                  Calificaciones de 5 estrellas de compañeros añaden <strong>+5 puntos</strong> ponderados.
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="font-bold text-sky-800">4. Red de Invitaciones Legítimas</div>
+                <div className="text-slate-600 text-[11px] mt-0.5">
+                  Cada invitado que valide su primera colaboración suma <strong>+25 puntos</strong> a tu score de invitador.
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="font-bold text-rose-800">5. Penalizaciones Anti-Colusión</div>
+                <div className="text-rose-700 text-[11px] mt-0.5">
+                  Disputas confirmadas o detección de intercambios circulares descuentan <strong>-50 puntos</strong> y aplican alertas.
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 text-right">
+              <button
+                onClick={() => setShowFormulaModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}

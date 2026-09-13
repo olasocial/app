@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   ExternalLink,
-  Award
+  Award,
+  Users
 } from 'lucide-react';
 import { OlaLogo } from './OlaLogo';
 import { useAuth } from '../context/AuthContext';
@@ -138,6 +139,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Trophy className="w-3.5 h-3.5" />
               <span>Ranking</span>
+            </button>
+
+            <button
+              onClick={() => onSelectTab('invitations')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                currentTab === 'invitations'
+                  ? 'bg-white text-teal-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-teal-600" />
+              <span>Invitaciones</span>
             </button>
 
             <button
@@ -457,6 +470,17 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Ranking de Mejores Abrazadores
+            </button>
+            <button
+              onClick={() => {
+                onSelectTab('invitations');
+                setMobileMenuOpen(false);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-xl text-sm font-semibold ${
+                currentTab === 'invitations' ? 'bg-teal-50 text-teal-700' : 'text-slate-700'
+              }`}
+            >
+              Sistema de Invitaciones
             </button>
             <button
               onClick={() => {

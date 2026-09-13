@@ -1,11 +1,26 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, UserRole, AccountStatus, UserLevel, PresenceStatus, LanguageKey } from '../types';
+import {
+  UserProfile,
+  UserRole,
+  AccountStatus,
+  UserLevel,
+  PresenceStatus,
+  LanguageKey,
+  MfaFactor,
+  MfaEnrollResult
+} from '../types';
 import {
   supabase,
   isSupabaseConfigured,
   ADMIN_PRIMARY_EMAIL,
   fetchUserProfile,
-  upsertUserProfile
+  upsertUserProfile,
+  enrollMfaTotp,
+  challengeAndVerifyMfa,
+  listUserMfaFactors,
+  unenrollMfaFactor,
+  getAuthAssuranceLevel,
+  attributeInviteCode
 } from '../services/supabaseClient';
 
 interface AuthContextType {
@@ -18,9 +33,17 @@ interface AuthContextType {
   authError: string | null;
   language: LanguageKey;
   needsOnboarding: boolean;
+  mfaNeedsVerification: boolean;
+  mfaFactors: MfaFactor[];
+  activeMfaFactor: MfaFactor | null;
   setLanguage: (lang: LanguageKey) => void;
   loginWithGoogle: () => Promise<void>;
-  loginAsDemoUser: (asAdmin?: boolean) => void;
+  registerWithEmail: (email: string, password: string, displayName: string, inviteCode?: string) => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<{ requiresMfa: boolean }>;
+  resetPassword: (email: string) => Promise<void>;
+  verifyMfaCode: (code: string, factorId?: string) => Promise<boolean>;
+  enrollMfa: (friendlyName?: string) => Promise<MfaEnrollResult | null>;
+  unenrollMfa: (factorId: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -37,8 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [bannedReason, setBannedReason] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [language, setLanguageState] = useState<LanguageKey>('es');
+  const [mfaNeedsVerification, setMfaNeedsVerification] = useState<boolean>(false);
+  const [mfaFactors, setMfaFactors] = useState<MfaFactor[]>([]);
+  const [activeMfaFactor, setActiveMfaFactor] = useState<MfaFactor | null>(null);
 
-  // Load user profile from Supabase Auth & DB
+  // Sync profile from Supabase Auth & DB
   const syncProfileFromAuthUser = async (authUser: {
     id: string;
     email?: string;
@@ -50,16 +76,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Fetch from Supabase profiles table
       let profile = await fetchUserProfile(authUser.id);
 
-      // 2. If profile does not exist yet (first Google OAuth login), create controlled upsert
+      // 2. If profile does not exist yet (first OAuth or direct signup), create with unique identity
       if (!profile) {
-        const email = authUser.email;
-        const isSuperAdminEmail = email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase();
+        const email = authUser.email.trim().toLowerCase();
+        const isSuperAdminEmail = email === ADMIN_PRIMARY_EMAIL.toLowerCase() || email === 'v19629049@gmail.com';
         const username = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
         const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || username;
         const avatarUrl =
           authUser.user_metadata?.avatar_url ||
           authUser.user_metadata?.picture ||
           `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+
+        // Cryptographically generated invite code (zero Math.random)
+        const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+          .toUpperCase();
+        const inviteCode = `OLA-${randomHex}`;
 
         profile = await upsertUserProfile({
           id: authUser.id,
@@ -73,6 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           presence: PresenceStatus.ONLINE,
           last_seen_at: new Date().toISOString(),
           reputation: 75.0,
+          reputation_score: isSuperAdminEmail ? 1000.0 : 100.0,
+          level_number: isSuperAdminEmail ? 10 : 1,
           hugs_done: 0,
           hugs_received: 0,
           hugs_verified: 0,
@@ -81,16 +116,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           campaigns_created: 0,
           campaigns_completed: 0,
           confidence_level: 80,
-          user_level: UserLevel.NUEVO,
+          user_level: isSuperAdminEmail ? UserLevel.PULSO_SOCIAL : UserLevel.NUEVO,
           warnings_count: 0,
           is_18_confirmed: false,
           mfa_enabled: false,
+          invite_code: inviteCode,
+          invitation_score: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
+
+        // If referral code exists in metadata or session, attribute invitation
+        const refCode = authUser.user_metadata?.invite_code || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ola_ref_code') : null);
+        if (refCode) {
+          await attributeInviteCode(refCode, authUser.id);
+        }
       }
 
-      // 3. Status verification (Section 15: Bloqueo Real del Acceso)
+      // 3. Status verification (Account access enforcement)
       if (profile) {
         if (profile.status === AccountStatus.BANNED) {
           setIsBanned(true);
@@ -109,6 +152,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setBannedReason(null);
         setUser(profile);
         setLanguageState(profile.language || 'es');
+
+        // Check MFA Assurance Level and Factors
+        if (isSupabaseConfigured && supabase) {
+          const aal = await getAuthAssuranceLevel();
+          const factors = await listUserMfaFactors();
+          setMfaFactors(factors.totp);
+
+          if (factors.totp.length > 0) {
+            setActiveMfaFactor(factors.totp[0]);
+            if (aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {
+              setMfaNeedsVerification(true);
+            } else {
+              setMfaNeedsVerification(false);
+            }
+          } else {
+            setMfaNeedsVerification(false);
+            setActiveMfaFactor(null);
+          }
+
+          // 4. Idempotent Welcome Notification (created once)
+          const { data: existingWelcome } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('user_id', authUser.id)
+            .eq('type', 'WELCOME')
+            .limit(1);
+
+          if (!existingWelcome || existingWelcome.length === 0) {
+            await supabase.from('notifications').insert({
+              user_id: authUser.id,
+              type: 'WELCOME',
+              title: '¡Bienvenido a OLA SOCIAL!',
+              message: 'Tu cuenta ha sido creada exitosamente. Explora el lobby y apoya a creadores reales.',
+              read: false,
+              created_at: new Date().toISOString()
+            });
+          }
+        }
       }
     } catch (err: any) {
       console.error('Error synchronizing user profile:', err);
@@ -160,6 +241,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
             setIsBanned(false);
             setBannedReason(null);
+            setMfaNeedsVerification(false);
+            setMfaFactors([]);
+            setActiveMfaFactor(null);
           }
         }
       );
@@ -182,6 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Google OAuth Login
   const loginWithGoogle = async () => {
     setAuthError(null);
     setIsLoading(true);
@@ -189,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!isSupabaseConfigured || !supabase) {
         throw new Error(
-          'Supabase no está configurado en las variables de entorno. Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.'
+          'Supabase no está configurado en las variables de entorno.'
         );
       }
 
@@ -214,50 +299,195 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginAsDemoUser = (asAdmin: boolean = false) => {
-    const demoEmail = asAdmin ? 'v19629049@gmail.com' : 'creador_comunitario@abrazar.app';
-    const demoName = asAdmin ? 'Admin Principal' : 'Creador Comunitario';
-    const demoUser: UserProfile = {
-      id: asAdmin ? 'usr-superadmin-01' : 'usr-demo-creator-01',
-      email: demoEmail,
-      display_name: demoName,
-      username: asAdmin ? 'superadmin' : 'creador_activo',
-      avatar_url: asAdmin
-        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      role: asAdmin ? UserRole.SUPER_ADMIN : UserRole.USER,
-      status: AccountStatus.ACTIVE,
-      language: 'es',
-      timezone: 'America/Mexico_City',
-      presence: PresenceStatus.ONLINE,
-      last_seen_at: new Date().toISOString(),
-      reputation: 98.5,
-      hugs_done: 28,
-      hugs_received: 34,
-      hugs_verified: 32,
-      stars_count: 140,
-      rating_avg: 4.95,
-      campaigns_created: 3,
-      campaigns_completed: 12,
-      confidence_level: 95,
-      user_level: asAdmin ? UserLevel.PULSO_SOCIAL : UserLevel.IMPULSOR,
-      level_number: asAdmin ? 10 : 4,
-      experience_points: asAdmin ? 11200 : 780,
-      reputation_score: asAdmin ? 985 : 420,
-      unique_users_helped: asAdmin ? 120 : 18,
-      unique_platforms_supported: asAdmin ? 6 : 4,
-      unique_campaigns_completed: asAdmin ? 45 : 12,
-      warnings_count: 0,
-      is_18_confirmed: true,
-      terms_accepted_at: new Date().toISOString(),
-      mfa_enabled: false,
-      created_at: new Date(Date.now() - 86400000 * 45).toISOString(),
-      updated_at: new Date().toISOString()
-    };
+  // Email/Password Registration (Normalizes email, checks duplicates, single account)
+  const registerWithEmail = async (
+    email: string,
+    password: string,
+    displayName: string,
+    inviteCode?: string
+  ) => {
+    setAuthError(null);
+    setIsLoading(true);
 
-    setUser(demoUser);
-    setIsBanned(false);
-    setBannedReason(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      setIsLoading(false);
+      const msg = 'El formato del correo electrónico no es válido.';
+      setAuthError(msg);
+      throw new Error(msg);
+    }
+
+    if (password.length < 8) {
+      setIsLoading(false);
+      const msg = 'La contraseña debe tener al menos 8 caracteres.';
+      setAuthError(msg);
+      throw new Error(msg);
+    }
+
+    if (!isSupabaseConfigured || !supabase) {
+      setIsLoading(false);
+      throw new Error('Supabase no está disponible');
+    }
+
+    try {
+      const redirectUrl = new URL(window.location.pathname, window.location.origin).toString();
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: displayName.trim(),
+            invite_code: inviteCode?.trim().toUpperCase() || null
+          }
+        }
+      });
+
+      if (error) {
+        if (
+          error.message.toLowerCase().includes('already registered') ||
+          error.message.toLowerCase().includes('already exists') ||
+          error.status === 400 ||
+          error.status === 422
+        ) {
+          const msg = 'Este correo ya está registrado. Inicia sesión o recupera tu contraseña.';
+          setAuthError(msg);
+          throw new Error(msg);
+        }
+        throw error;
+      }
+
+      if (data.user) {
+        await syncProfileFromAuthUser(data.user);
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Error en el registro');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Email/Password Sign In (Handles 2FA challenge detection)
+  const loginWithEmail = async (
+    email: string,
+    password: string
+  ): Promise<{ requiresMfa: boolean }> => {
+    setAuthError(null);
+    setIsLoading(true);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setIsLoading(false);
+      throw new Error('Supabase no está disponible');
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        await syncProfileFromAuthUser(data.user);
+
+        // Check if user requires MFA AAL2
+        const aal = await getAuthAssuranceLevel();
+        if (aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {
+          setMfaNeedsVerification(true);
+          return { requiresMfa: true };
+        }
+      }
+
+      return { requiresMfa: false };
+    } catch (err: any) {
+      setAuthError(err.message || 'Credenciales no válidas');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Password Reset
+  const resetPassword = async (email: string): Promise<void> => {
+    setAuthError(null);
+    setIsLoading(true);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!isSupabaseConfigured || !supabase) {
+      setIsLoading(false);
+      throw new Error('Supabase no está disponible');
+    }
+
+    try {
+      const redirectUrl = new URL(window.location.pathname, window.location.origin).toString();
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: redirectUrl
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setAuthError(err.message || 'No fue posible enviar el correo de recuperación');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Verify MFA Challenge
+  const verifyMfaCode = async (code: string, factorId?: string): Promise<boolean> => {
+    const targetFactorId = factorId || activeMfaFactor?.id || (mfaFactors[0]?.id);
+    if (!targetFactorId) {
+      setAuthError('No se encontró ningún factor MFA registrado');
+      return false;
+    }
+
+    const { success, error } = await challengeAndVerifyMfa(targetFactorId, code);
+    if (success) {
+      setMfaNeedsVerification(false);
+      setAuthError(null);
+      if (user) {
+        await updateProfile({ mfa_enabled: true });
+      }
+      return true;
+    } else {
+      setAuthError(error || 'Código incorrecto');
+      return false;
+    }
+  };
+
+  // Enroll new MFA Factor
+  const enrollMfa = async (friendlyName: string = 'Autenticador Principal'): Promise<MfaEnrollResult | null> => {
+    const { data, error } = await enrollMfaTotp(friendlyName);
+    if (error) {
+      setAuthError(error);
+      return null;
+    }
+    return data;
+  };
+
+  // Unenroll MFA Factor
+  const unenrollMfa = async (factorId: string): Promise<boolean> => {
+    const { success, error } = await unenrollMfaFactor(factorId);
+    if (success) {
+      const factors = await listUserMfaFactors();
+      setMfaFactors(factors.totp);
+      if (factors.totp.length === 0 && user) {
+        await updateProfile({ mfa_enabled: false });
+        setActiveMfaFactor(null);
+      }
+      return true;
+    } else {
+      setAuthError(error || 'Error al desvincular factor');
+      return false;
+    }
   };
 
   const logout = async () => {
@@ -272,6 +502,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setIsBanned(false);
       setBannedReason(null);
+      setMfaNeedsVerification(false);
+      setMfaFactors([]);
+      setActiveMfaFactor(null);
       setIsLoading(false);
     }
   };
@@ -336,14 +569,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Protected Admin Authorization from Supabase
   const isSuperAdmin =
     user?.role === UserRole.SUPER_ADMIN ||
-    Boolean(user?.email && (
-      user.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase() ||
-      user.email.toLowerCase() === 'v19629049@gmail.com'
-    ));
+    Boolean(
+      user?.email &&
+        (user.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase() ||
+          user.email.toLowerCase() === 'v19629049@gmail.com')
+    );
 
   const isAdmin = isSuperAdmin || user?.role === UserRole.ADMIN;
 
-  const needsOnboarding = Boolean(user && (!user.is_18_confirmed || !user.terms_accepted_at));
+  // Strict Onboarding Rule: Once completed and confirmed, never ask again
+  const needsOnboarding = Boolean(
+    user &&
+      !user.onboarding_completed &&
+      (!user.is_18_confirmed || !user.terms_accepted_at)
+  );
 
   return (
     <AuthContext.Provider
@@ -357,9 +596,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError,
         language,
         needsOnboarding,
+        mfaNeedsVerification,
+        mfaFactors,
+        activeMfaFactor,
         setLanguage,
         loginWithGoogle,
-        loginAsDemoUser,
+        registerWithEmail,
+        loginWithEmail,
+        resetPassword,
+        verifyMfaCode,
+        enrollMfa,
+        unenrollMfa,
         logout,
         updateProfile,
         refreshProfile,
