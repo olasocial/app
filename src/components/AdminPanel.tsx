@@ -203,11 +203,18 @@ export const AdminPanel: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {fraudEvents.map((evt) => (
-              <div
-                key={evt.id}
-                className="p-4 rounded-2xl border border-rose-100 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs"
-              >
+            {fraudEvents.length === 0 ? (
+              <div className="p-8 rounded-2xl border border-slate-100 bg-slate-50 text-center">
+                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                <h4 className="text-sm font-bold text-slate-800">Cero alertas de fraude pendientes</h4>
+                <p className="text-xs text-slate-500 mt-1">El sistema opera con normalidad y sin incidencias detectadas.</p>
+              </div>
+            ) : (
+              fraudEvents.map((evt) => (
+                <div
+                  key={evt.id}
+                  className="p-4 rounded-2xl border border-rose-100 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs"
+                >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px]">
@@ -243,7 +250,7 @@ export const AdminPanel: React.FC = () => {
                   </span>
                 )}
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}
@@ -510,17 +517,25 @@ export const AdminPanel: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/50">
-                    <td className="px-3.5 py-3 whitespace-nowrap text-slate-400 text-[11px]">
-                      {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {auditLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-slate-400 text-xs">
+                      No hay eventos en el registro de auditoría.
                     </td>
-                    <td className="px-3.5 py-3 font-semibold text-slate-800 whitespace-nowrap">{log.admin_email}</td>
-                    <td className="px-3.5 py-3 font-mono font-bold text-sky-700 whitespace-nowrap">{log.action}</td>
-                    <td className="px-3.5 py-3 text-slate-700 whitespace-nowrap">{log.target_type}</td>
-                    <td className="px-3.5 py-3 text-slate-800 min-w-[200px]">{log.details}</td>
                   </tr>
-                ))}
+                ) : (
+                  auditLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50/50">
+                      <td className="px-3.5 py-3 whitespace-nowrap text-slate-400 text-[11px]">
+                        {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="px-3.5 py-3 font-semibold text-slate-800 whitespace-nowrap">{log.admin_email}</td>
+                      <td className="px-3.5 py-3 font-mono font-bold text-sky-700 whitespace-nowrap">{log.action}</td>
+                      <td className="px-3.5 py-3 text-slate-700 whitespace-nowrap">{log.target_type}</td>
+                      <td className="px-3.5 py-3 text-slate-800 min-w-[200px]">{log.details}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

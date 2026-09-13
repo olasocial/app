@@ -86,12 +86,23 @@ Los archivos estáticos generados se ubicarán en `/dist`.
 
 ---
 
-## 📄 Base de Datos
+## 📄 Documentación Técnica de Producción
 
-El esquema completo de PostgreSQL con políticas RLS y tablas de auditoría se encuentra en [`supabase_schema.sql`](./supabase_schema.sql).
+Consulte los manuales específicos para la operación y auditoría del sistema:
+
+- **Arquitectura Global:** [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- **Seguridad y RLS:** [`SECURITY.md`](./SECURITY.md)
+- **Base de Datos y Procedimientos:** [`DATABASE.md`](./DATABASE.md)
+- **Flujo de Autenticación Supabase Auth:** [`AUTH_FLOW.md`](./AUTH_FLOW.md)
+- **Doble Factor de Autenticación (2FA TOTP):** [`MFA.md`](./MFA.md)
+- **Sistema Real de Invitaciones:** [`INVITATIONS.md`](./INVITATIONS.md)
+- **Reporte de Auditoría y Limpieza Supabase:** [`SUPABASE_CLEANUP_AUDIT.md`](./SUPABASE_CLEANUP_AUDIT.md)
+- **Guía de Limpieza y Mantenimiento:** [`SUPABASE_CLEANUP.md`](./SUPABASE_CLEANUP.md)
+- **Verificación Humana Cloudflare Turnstile:** [`TURNSTILE.md`](./TURNSTILE.md)
+- **Esquema SQL Oficial:** [`supabase_schema.sql`](./supabase_schema.sql)
 
 ---
 
 ## ⚖️ Licencia y Cumplimiento
 
-Este software prohíbe terminantemente la simulación artificial de métricas, el scraping invasivo y cualquier automatización de interacciones en plataformas de terceros. Consulte [`ARCHITECTURE.md`](./ARCHITECTURE.md) y [`SECURITY.md`](./SECURITY.md) para más detalles.
+Este software prohíbe terminantemente la simulación artificial de métricas, el scraping invasivo y cualquier automatización de interacciones en plataformas de terceros. Todos los datos mostrados proceden de interacciones humanas voluntarias verificadas.

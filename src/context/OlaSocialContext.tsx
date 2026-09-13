@@ -34,7 +34,6 @@ import {
   Dispute,
   DisputeStatus
 } from '../types';
-import { INITIAL_COMMUNITY_CAMPAIGNS, INITIAL_COMMUNITY_TASKS } from '../data/seedData';
 
 export const OFFICIAL_LEVEL_REQUIREMENTS: LevelRequirement[] = [
   {
@@ -213,8 +212,8 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { user, isAdmin, refreshProfile } = useAuth();
 
   const [socialProfiles, setSocialProfiles] = useState<SocialProfile[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>(INITIAL_COMMUNITY_CAMPAIGNS);
-  const [tasks, setTasks] = useState<CampaignTask[]>(INITIAL_COMMUNITY_TASKS);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [tasks, setTasks] = useState<CampaignTask[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeBattles, setActiveBattles] = useState<BattleEvent[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -230,9 +229,9 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
 
-  const [onlineUsersCount, setOnlineUsersCount] = useState<number>(14);
-  const [newUsersTodayCount, setNewUsersTodayCount] = useState<number>(38);
-  const [peopleDiscoveringCount, setPeopleDiscoveringCount] = useState<number>(126);
+  const [onlineUsersCount, setOnlineUsersCount] = useState<number>(user ? 1 : 0);
+  const [newUsersTodayCount, setNewUsersTodayCount] = useState<number>(0);
+  const [peopleDiscoveringCount, setPeopleDiscoveringCount] = useState<number>(0);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
   // Load real data from Supabase
@@ -246,8 +245,10 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .from('campaign_tasks')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!tasksError && tasksData && tasksData.length > 0) {
+      if (!tasksError && tasksData) {
         setTasks(tasksData as CampaignTask[]);
+      } else if (!tasksData || tasksData.length === 0) {
+        setTasks([]);
       }
 
       // 2. Campaigns
@@ -255,8 +256,10 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .from('campaigns')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!campError && campaignsData && campaignsData.length > 0) {
+      if (!campError && campaignsData) {
         setCampaigns(campaignsData as Campaign[]);
+      } else if (!campaignsData || campaignsData.length === 0) {
+        setCampaigns([]);
       }
 
       // 3. User Social Profiles & Notifications & Personal Ledger/Reputation
@@ -282,6 +285,13 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         const badgesData = await fetchUserBadges(user.id);
         if (badgesData.length > 0) setBadges(badgesData);
+
+        // Real discovering metric: users interacting with current user campaigns
+        const userCampaigns = (campaignsData || []).filter((c: any) => c.creator_id === user.id);
+        const discoveringSum = userCampaigns.reduce((sum: number, c: any) => sum + (c.current_participants || 0), 0);
+        setPeopleDiscoveringCount(discoveringSum);
+      } else {
+        setPeopleDiscoveringCount(0);
       }
 
       // 4. Battles
@@ -326,9 +336,15 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .from('profiles')
         .select('*', { count: 'exact', head: true });
       if (userCount !== null) {
-        setOnlineUsersCount(Math.max(1, userCount));
-        setNewUsersTodayCount(userCount);
+        setOnlineUsersCount(user ? Math.max(1, userCount) : userCount);
       }
+
+      // Real users created in last 24h
+      const { count: newToday } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(Date.now() - 86400000).toISOString());
+      setNewUsersTodayCount(newToday ?? 0);
     } catch (err) {
       console.error('Error fetching data from Supabase:', err);
     } finally {

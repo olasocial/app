@@ -196,12 +196,6 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
           </button>
         </div>
       )}
-
-      {!isTurnstileProductionConfigured && (
-        <div className="text-[10px] text-slate-400 text-center">
-          Entorno de verificación: Modo protegido (Testing / Dev)
-        </div>
-      )}
     </div>
   );
 };

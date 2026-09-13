@@ -534,3 +534,112 @@ CREATE POLICY "Participants and admin read disputes" ON public.disputes FOR SELE
   auth.uid() = reporter_id OR auth.uid() = accused_id OR public.is_admin(auth.uid())
 );
 
+-- ============================================================
+-- AUDITORÍA DE BASE DE DATOS Y LIMPIEZA CLASIFICADA: cleanup_audit
+-- Procedimiento para clasificar registros en: REAL, SIMULADO, PRUEBA, DUDOSO
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.cleanup_audit()
+RETURNS TABLE (
+  issue_category TEXT,
+  target_table TEXT,
+  record_id TEXT,
+  issue_description TEXT,
+  classification TEXT,
+  proposed_action TEXT,
+  risk_level TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+AS $$
+BEGIN
+  -- 1. Perfiles huérfanos sin usuario en auth.users
+  RETURN QUERY
+  SELECT
+    'ORPHAN_PROFILE'::TEXT,
+    'profiles'::TEXT,
+    p.id::TEXT,
+    ('Perfil ' || COALESCE(p.email, p.id::TEXT) || ' no tiene cuenta correspondiente en auth.users')::TEXT,
+    'DUDOSO'::TEXT,
+    'Archivar o investigar perfil huérfano'::TEXT,
+    'MEDIO'::TEXT
+  FROM public.profiles p
+  LEFT JOIN auth.users u ON u.id = p.id
+  WHERE u.id IS NULL;
+
+  -- 2. Cuentas de prueba conocidas o dominios de desarrollo/test
+  RETURN QUERY
+  SELECT
+    'TEST_ACCOUNT'::TEXT,
+    'profiles'::TEXT,
+    p.id::TEXT,
+    ('Cuenta con patrón de prueba detectado: ' || p.email)::TEXT,
+    'PRUEBA'::TEXT,
+    'Eliminar registro de prueba previa confirmación y backup'::TEXT,
+    'ALTO'::TEXT
+  FROM public.profiles p
+  WHERE (p.email ILIKE '%@example.com'
+     OR p.email ILIKE '%test%@%'
+     OR p.email ILIKE '%dummy%@%'
+     OR p.email ILIKE '%fake%@%')
+     AND p.email != 'v19629049@gmail.com';
+
+  -- 3. Invitaciones huérfanas (inviter no existe en profiles)
+  RETURN QUERY
+  SELECT
+    'ORPHAN_INVITATION'::TEXT,
+    'invitations'::TEXT,
+    inv.id::TEXT,
+    ('Invitación huérfana con inviter_user_id inexistente: ' || inv.inviter_user_id::TEXT)::TEXT,
+    'PRUEBA'::TEXT,
+    'Depurar registro de invitación huérfano'::TEXT,
+    'BAJO'::TEXT
+  FROM public.invitations inv
+  LEFT JOIN public.profiles p ON p.id = inv.inviter_user_id
+  WHERE p.id IS NULL;
+
+  -- 4. Notificaciones huérfanas
+  RETURN QUERY
+  SELECT
+    'ORPHAN_NOTIFICATION'::TEXT,
+    'notifications'::TEXT,
+    n.id::TEXT,
+    ('Notificación huérfana con user_id inexistente: ' || n.user_id::TEXT)::TEXT,
+    'PRUEBA'::TEXT,
+    'Depurar registro de notificación huérfano'::TEXT,
+    'BAJO'::TEXT
+  FROM public.notifications n
+  LEFT JOIN public.profiles p ON p.id = n.user_id
+  WHERE p.id IS NULL;
+
+  -- 5. Auto-invitaciones (colusión / simulación)
+  RETURN QUERY
+  SELECT
+    'SELF_INVITATION'::TEXT,
+    'invitations'::TEXT,
+    inv.id::TEXT,
+    ('Auto-invitación detectada: inviter_user_id igual a invited_user_id (' || inv.inviter_user_id::TEXT || ')')::TEXT,
+    'SIMULADO'::TEXT,
+    'Eliminar auto-invitación y recalcular reputación'::TEXT,
+    'MEDIO'::TEXT
+  FROM public.invitations inv
+  WHERE inv.inviter_user_id = inv.invited_user_id;
+
+  -- 6. Tareas huérfanas (campaña ya no existe)
+  RETURN QUERY
+  SELECT
+    'ORPHAN_TASK'::TEXT,
+    'campaign_tasks'::TEXT,
+    t.id::TEXT,
+    ('Tarea vinculada a campaign_id inexistente: ' || t.campaign_id::TEXT)::TEXT,
+    'PRUEBA'::TEXT,
+    'Eliminar tarea huérfana'::TEXT,
+    'BAJO'::TEXT
+  FROM public.campaign_tasks t
+  LEFT JOIN public.campaigns c ON c.id = t.campaign_id
+  WHERE c.id IS NULL;
+
+END;
+$$;
+
+

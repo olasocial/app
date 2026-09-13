@@ -162,42 +162,60 @@ export async function verifyTurnstileTokenServerSide(
   }
 
   try {
-    // 1. If Supabase is configured with an Edge Function 'verify-turnstile'
+    // 1. Primary: Verify via Supabase Edge Function 'verify-turnstile'
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: token.trim() }
-      });
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-turnstile', {
+          body: { token: token.trim() }
+        });
 
-      if (error) {
-        console.warn('Turnstile Edge Function warning, fallback to direct validation:', error);
-      } else if (data && typeof data.success === 'boolean') {
-        return {
-          success: data.success,
-          message: data.error || (data.success ? 'Verificación humana completada.' : 'Fallo de verificación.'),
-          challenge_ts: data.challenge_ts,
-          hostname: data.hostname
-        };
+        if (!error && data && typeof data.success === 'boolean') {
+          return {
+            success: data.success,
+            message: data.success ? 'Verificación humana completada.' : (data.error || 'Fallo de verificación.'),
+            challenge_ts: data.challenge_ts,
+            hostname: data.hostname
+          };
+        }
+      } catch (edgeErr) {
+        console.warn('Supabase Edge Function verify-turnstile unavailable, attempting backend fallback:', edgeErr);
       }
     }
 
-    // 2. If using Cloudflare testing dummy tokens in dev/staging environments:
-    // Cloudflare test tokens always start with or contain 'XXXX.' or have standard length
-    if (token.length > 10) {
-      return {
-        success: true,
-        message: 'Verificación humana completada exitosamente.'
-      };
+    // 2. Secondary: Verify via backend API endpoint (/api/verify-turnstile)
+    try {
+      const response = await fetch('/api/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim() })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result && typeof result.success === 'boolean') {
+          return {
+            success: result.success,
+            message: result.success
+              ? 'Verificación humana completada exitosamente.'
+              : 'Verificación de seguridad no superada.',
+            challenge_ts: result.challenge_ts,
+            hostname: result.hostname
+          };
+        }
+      }
+    } catch {
+      // Backend middleware not reachable
     }
 
     return {
       success: false,
-      message: 'No pudimos verificar que eres una persona. Inténtalo nuevamente.'
+      message: 'No se pudo contactar al servidor de verificación. Reintente en un momento.'
     };
   } catch (err: any) {
     console.error('Error invoking turnstile verification:', err);
     return {
       success: false,
-      message: 'Error al contactar el servicio de verificación humana.'
+      message: 'Error de comunicación con el servicio de verificación humana.'
     };
   }
 }
