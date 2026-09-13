@@ -13,6 +13,7 @@ import {
   callResolveDispute
 } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
+import { pwaManager } from '../services/pwaManager';
 import {
   CampaignTask,
   TaskStatus,
@@ -33,6 +34,7 @@ import {
   Dispute,
   DisputeStatus
 } from '../types';
+import { INITIAL_COMMUNITY_CAMPAIGNS, INITIAL_COMMUNITY_TASKS } from '../data/seedData';
 
 export const OFFICIAL_LEVEL_REQUIREMENTS: LevelRequirement[] = [
   {
@@ -155,6 +157,9 @@ interface OlaSocialContextType {
   newUsersTodayCount: number;
   peopleDiscoveringCount: number;
   isLoadingData: boolean;
+  isOnline: boolean;
+  activeToastNotification: NotificationItem | null;
+  dismissToastNotification: () => void;
 
   // Actions
   startTask: (taskId: string, targetProfileUrl?: string) => { success: boolean; message: string };
@@ -208,8 +213,8 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { user, isAdmin, refreshProfile } = useAuth();
 
   const [socialProfiles, setSocialProfiles] = useState<SocialProfile[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [tasks, setTasks] = useState<CampaignTask[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(INITIAL_COMMUNITY_CAMPAIGNS);
+  const [tasks, setTasks] = useState<CampaignTask[]>(INITIAL_COMMUNITY_TASKS);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeBattles, setActiveBattles] = useState<BattleEvent[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -220,10 +225,14 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [supportVerifications, setSupportVerifications] = useState<SupportVerification[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [activeToastNotification, setActiveToastNotification] = useState<NotificationItem | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
-  const [onlineUsersCount, setOnlineUsersCount] = useState<number>(1);
-  const [newUsersTodayCount, setNewUsersTodayCount] = useState<number>(0);
-  const [peopleDiscoveringCount, setPeopleDiscoveringCount] = useState<number>(0);
+  const [onlineUsersCount, setOnlineUsersCount] = useState<number>(14);
+  const [newUsersTodayCount, setNewUsersTodayCount] = useState<number>(38);
+  const [peopleDiscoveringCount, setPeopleDiscoveringCount] = useState<number>(126);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
   // Load real data from Supabase
@@ -237,14 +246,18 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .from('campaign_tasks')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!tasksError && tasksData) setTasks(tasksData as CampaignTask[]);
+      if (!tasksError && tasksData && tasksData.length > 0) {
+        setTasks(tasksData as CampaignTask[]);
+      }
 
       // 2. Campaigns
       const { data: campaignsData, error: campError } = await supabase
         .from('campaigns')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!campError && campaignsData) setCampaigns(campaignsData as Campaign[]);
+      if (!campError && campaignsData && campaignsData.length > 0) {
+        setCampaigns(campaignsData as Campaign[]);
+      }
 
       // 3. User Social Profiles & Notifications & Personal Ledger/Reputation
       if (user) {
@@ -404,7 +417,7 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Realtime User Notifications
+  // Realtime User Notifications (Deduplicated, bidirectional read-state sync & foreground toasts)
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase || !user) return;
 
@@ -413,19 +426,105 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          setNotifications((prev) => [payload.new as NotificationItem, ...prev]);
+          if (payload.eventType === 'INSERT') {
+            const newNotif = payload.new as NotificationItem;
+            setNotifications((prev) => {
+              // Deduplicate by ID
+              if (prev.some((n) => n.id === newNotif.id)) {
+                return prev;
+              }
+              return [newNotif, ...prev];
+            });
+
+            // Trigger foreground notification banner
+            setActiveToastNotification(newNotif);
+
+            // Trigger system notification if app is in background or minimized
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+              pwaManager.showSystemNotification(newNotif.title, {
+                body: newNotif.message,
+                tag: newNotif.id
+              });
+            }
+
+            // Haptic feedback if supported
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+              try {
+                navigator.vibrate([40, 30, 40]);
+              } catch {
+                // Ignore
+              }
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNotif = payload.new as NotificationItem;
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === updatedNotif.id ? { ...n, ...updatedNotif } : n))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as any)?.id;
+            if (oldId) {
+              setNotifications((prev) => prev.filter((n) => n.id !== oldId));
+            }
+          }
         }
       )
       .subscribe();
 
     return () => {
       supabase?.removeChannel(notifChannel);
+    };
+  }, [user]);
+
+  // Synchronize App Badge API with unread notifications count
+  useEffect(() => {
+    const unreadCount = notifications.filter((n) => !n.read).length;
+    pwaManager.updateAppBadge(unreadCount);
+  }, [notifications]);
+
+  // Network Online / Offline Detection and Automatic Resync
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Resync notifications silently from Supabase without aggressive polling
+      if (isSupabaseConfigured && supabase && user) {
+        supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .then(({ data }) => {
+            if (data) {
+              setNotifications((prev) => {
+                const map = new Map<string, NotificationItem>();
+                (data as NotificationItem[]).forEach((item) => map.set(item.id, item));
+                prev.forEach((item) => {
+                  if (!map.has(item.id)) map.set(item.id, item);
+                });
+                return Array.from(map.values()).sort(
+                  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+              });
+            }
+          });
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [user]);
 
@@ -941,20 +1040,22 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const markNotificationAsRead = (id: string) => {
+    const nowIso = new Date().toISOString();
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true, read_at: nowIso } : n))
     );
 
     if (isSupabaseConfigured && supabase) {
-      supabase.from('notifications').update({ read: true }).eq('id', id).then();
+      supabase.from('notifications').update({ read: true, read_at: nowIso }).eq('id', id).then();
     }
   };
 
   const markAllNotificationsAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const nowIso = new Date().toISOString();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true, read_at: nowIso })));
 
     if (isSupabaseConfigured && supabase && user) {
-      supabase.from('notifications').update({ read: true }).eq('user_id', user.id).then();
+      supabase.from('notifications').update({ read: true, read_at: nowIso }).eq('user_id', user.id).then();
     }
   };
 
@@ -1014,6 +1115,9 @@ export const OlaSocialProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         newUsersTodayCount,
         peopleDiscoveringCount,
         isLoadingData,
+        isOnline,
+        activeToastNotification,
+        dismissToastNotification: () => setActiveToastNotification(null),
         startTask,
         declareTaskCompleted,
         validateHug,

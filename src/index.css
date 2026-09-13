@@ -24,10 +24,12 @@
 }
 
 /* iOS Safe Area Utilities */
-.pb-safe {
+.pb-safe,
+.safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 1rem);
 }
-.pt-safe {
+.pt-safe,
+.safe-area-pt {
   padding-top: env(safe-area-inset-top, 0.5rem);
 }
 

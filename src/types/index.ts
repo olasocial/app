@@ -226,6 +226,7 @@ export interface NotificationItem {
   title: string;
   message: string;
   read: boolean;
+  read_at?: string;
   action_url?: string;
   created_at: string;
 }

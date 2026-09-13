@@ -16,10 +16,21 @@ import { LegalDocsModal } from './components/LegalDocsModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { LoginModal } from './components/LoginModal';
 import { OlaLogo } from './components/OlaLogo';
-import { ShieldAlert, LogOut, ShieldCheck, Heart } from 'lucide-react';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { PWAUpdateToast } from './components/PWAUpdateToast';
+import { ForegroundNotificationToast } from './components/ForegroundNotificationToast';
+import { NotificationPermissionPrompt } from './components/NotificationPermissionPrompt';
+import { useOlaSocial } from './context/OlaSocialContext';
+import { ShieldAlert, LogOut, ShieldCheck, Heart, WifiOff } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
   const { user, isBanned, bannedReason, logout, needsOnboarding } = useAuth();
+  const {
+    activeToastNotification,
+    dismissToastNotification,
+    markNotificationAsRead,
+    isOnline
+  } = useOlaSocial();
   const [currentTab, setCurrentTab] = useState<string>('lobby');
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
 
@@ -92,6 +103,35 @@ const MainAppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 transition-colors duration-300">
+      {/* Offline Status Warning Pill */}
+      {!isOnline && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="bg-amber-600 text-white text-xs font-semibold py-1.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-xs animate-in fade-in duration-200"
+        >
+          <WifiOff className="w-3.5 h-3.5 shrink-0" />
+          <span>Modo sin conexión. Los cambios se sincronizarán al recuperar la red.</span>
+        </div>
+      )}
+
+      {/* PWA Persistent Update Toast */}
+      <PWAUpdateToast />
+
+      {/* Realtime Foreground Notification Toast Banner */}
+      <ForegroundNotificationToast
+        notification={activeToastNotification}
+        onDismiss={dismissToastNotification}
+        onView={(notif) => {
+          markNotificationAsRead(notif.id);
+          if (notif.type.includes('TASK')) {
+            setCurrentTab('lobby');
+          } else if (notif.type.includes('SECURITY') || notif.type.includes('ACCOUNT')) {
+            setCurrentTab('security');
+          }
+        }}
+      />
+
       {/* Pinned / Sticky Header with Animated Logo and Fluid Scroll Transition */}
       <Header
         currentTab={currentTab}
@@ -144,7 +184,7 @@ const MainAppContent: React.FC = () => {
             <div className="flex items-center gap-3">
               <OlaLogo variant="compact" animate={false} />
               <div className="text-xs text-slate-500">
-                © {new Date().getFullYear()} OLA SOCIAL. "Abrazos que conectan personas."
+                © {new Date().getFullYear()} ABRAZAR+ (Abrazos Digitales). "Crece junto a una comunidad real."
               </div>
             </div>
 
@@ -177,14 +217,14 @@ const MainAppContent: React.FC = () => {
                 onClick={() => setIsDonationsOpen(true)}
                 className="text-rose-600 hover:text-rose-700 font-bold transition-colors"
               >
-                Apoyar OLA SOCIAL
+                Apoyar ABRAZAR+
               </button>
             </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
             <span>
-              OLA SOCIAL no promete ni garantiza seguidores ni engagement externo artificial. Interacciones 100% humanas.
+              ABRAZAR+ no genera engagement artificial ni automatiza acciones en redes sociales. Apoyo voluntario y comunitario 100% humano.
             </span>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -226,6 +266,12 @@ const MainAppContent: React.FC = () => {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
       />
+
+      {/* PWA Mobile Installation Prompt Banner */}
+      <PWAInstallBanner />
+
+      {/* Realtime Notification Opt-In Prompt */}
+      <NotificationPermissionPrompt />
     </div>
   );
 };

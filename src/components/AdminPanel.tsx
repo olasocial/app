@@ -46,6 +46,7 @@ export const AdminPanel: React.FC = () => {
   const [resolutionNote, setResolutionNote] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [platformState, setPlatformState] = useState(PLATFORM_REGISTRY);
+  const [adminNotification, setAdminNotification] = useState<string | null>(null);
 
   const togglePlatform = (key: SocialPlatformKey) => {
     // Invert allowed status
@@ -55,7 +56,8 @@ export const AdminPanel: React.FC = () => {
       key,
       `Plataforma ${key} modificada en panel de cumplimiento.`
     );
-    alert(`Estado de la política de ${key} actualizado.`);
+    setAdminNotification(`Estado de la política de ${key} actualizado con éxito.`);
+    setTimeout(() => setAdminNotification(null), 4000);
   };
 
   return (
@@ -68,7 +70,7 @@ export const AdminPanel: React.FC = () => {
             <span>Panel de Control de Producción • Rol: {user?.role}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Administración Central OLA SOCIAL
+            Administración Central ABRAZAR<span className="text-amber-400">+</span>
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
             Supervisión integral de usuarios, cumplimiento de plataformas externas, auditoría y prevención de fraude.
@@ -127,6 +129,13 @@ export const AdminPanel: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {adminNotification && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{adminNotification}</span>
+        </div>
+      )}
 
       {/* Tab: Dashboard Metrics */}
       {activeTab === 'dashboard' && (

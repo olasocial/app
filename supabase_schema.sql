@@ -130,8 +130,21 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   read BOOLEAN DEFAULT FALSE,
+  read_at TIMESTAMPTZ,
   action_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7b. Push Subscriptions (Multi-Device Web Push)
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  last_used_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 8. Admin Audit Log (Append-Only)
@@ -247,6 +260,7 @@ ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaign_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fraud_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.moderation_actions ENABLE ROW LEVEL SECURITY;
@@ -334,6 +348,10 @@ CREATE POLICY "User claim or update task" ON public.campaign_tasks FOR UPDATE US
 -- Notifications Policies
 CREATE POLICY "Owner read own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Owner update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+
+-- Push Subscriptions Policies
+CREATE POLICY "Users can manage own push subscriptions" ON public.push_subscriptions
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Admin Audit Log (Append-Only, controlled insertion, strictly no UPDATE or DELETE)
 CREATE POLICY "Admins read audit logs" ON public.admin_audit_log FOR SELECT USING (public.is_admin(auth.uid()));

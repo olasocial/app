@@ -11,7 +11,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { loginWithGoogle, isLoading, authError } = useAuth();
+  const { loginWithGoogle, loginAsDemoUser, isLoading, authError } = useAuth();
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
@@ -36,6 +36,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleDemoLogin = (asAdmin: boolean) => {
+    loginAsDemoUser(asAdmin);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
       <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 relative text-center">
@@ -54,9 +59,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="space-y-1 mb-5">
-          <h3 className="text-xl font-extrabold text-slate-900">Acceder a OLA SOCIAL</h3>
+          <h3 className="text-xl font-extrabold text-slate-900">
+            Acceder a ABRAZAR<span className="text-amber-500">+</span>
+          </h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Comunidad humana de creadores auténticos. Sin bots, sin automatizaciones engañosas.
+            "Crece junto a una comunidad real." Sin bots, sin automatizaciones engañosas.
           </p>
         </div>
 
@@ -141,8 +148,31 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           )}
         </div>
 
+        {/* Demo Fast-Access Options */}
+        <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
+          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Acceso Rápido de Prueba
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin(false)}
+              className="py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold transition-all border border-sky-200"
+            >
+              Probar como Creador
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin(true)}
+              className="py-2 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold transition-all border border-purple-200"
+            >
+              Probar Super Admin
+            </button>
+          </div>
+        </div>
+
         {/* Security and Privacy Notice */}
-        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+        <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
           <span>Autenticación protegida con Supabase Auth & Google OAuth 2.0</span>
         </div>

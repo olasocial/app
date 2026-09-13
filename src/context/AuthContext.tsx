@@ -20,6 +20,7 @@ interface AuthContextType {
   needsOnboarding: boolean;
   setLanguage: (lang: LanguageKey) => void;
   loginWithGoogle: () => Promise<void>;
+  loginAsDemoUser: (asAdmin?: boolean) => void;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -213,6 +214,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginAsDemoUser = (asAdmin: boolean = false) => {
+    const demoEmail = asAdmin ? 'v19629049@gmail.com' : 'creador_comunitario@abrazar.app';
+    const demoName = asAdmin ? 'Admin Principal' : 'Creador Comunitario';
+    const demoUser: UserProfile = {
+      id: asAdmin ? 'usr-superadmin-01' : 'usr-demo-creator-01',
+      email: demoEmail,
+      display_name: demoName,
+      username: asAdmin ? 'superadmin' : 'creador_activo',
+      avatar_url: asAdmin
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      role: asAdmin ? UserRole.SUPER_ADMIN : UserRole.USER,
+      status: AccountStatus.ACTIVE,
+      language: 'es',
+      timezone: 'America/Mexico_City',
+      presence: PresenceStatus.ONLINE,
+      last_seen_at: new Date().toISOString(),
+      reputation: 98.5,
+      hugs_done: 28,
+      hugs_received: 34,
+      hugs_verified: 32,
+      stars_count: 140,
+      rating_avg: 4.95,
+      campaigns_created: 3,
+      campaigns_completed: 12,
+      confidence_level: 95,
+      user_level: asAdmin ? UserLevel.PULSO_SOCIAL : UserLevel.IMPULSOR,
+      level_number: asAdmin ? 10 : 4,
+      experience_points: asAdmin ? 11200 : 780,
+      reputation_score: asAdmin ? 985 : 420,
+      unique_users_helped: asAdmin ? 120 : 18,
+      unique_platforms_supported: asAdmin ? 6 : 4,
+      unique_campaigns_completed: asAdmin ? 45 : 12,
+      warnings_count: 0,
+      is_18_confirmed: true,
+      terms_accepted_at: new Date().toISOString(),
+      mfa_enabled: false,
+      created_at: new Date(Date.now() - 86400000 * 45).toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    setUser(demoUser);
+    setIsBanned(false);
+    setBannedReason(null);
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -312,6 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         needsOnboarding,
         setLanguage,
         loginWithGoogle,
+        loginAsDemoUser,
         logout,
         updateProfile,
         refreshProfile,

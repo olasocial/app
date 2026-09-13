@@ -316,7 +316,7 @@ export const SocialProfilesManager: React.FC = () => {
           <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <h3 className="font-extrabold text-slate-900 text-base sm:text-lg mb-2">Solicitar Cambio de Perfil</h3>
             <p className="text-xs text-slate-600 mb-4">
-              Para proteger la integridad de OLA SOCIAL y prevenir fraudes, los cambios de perfil son revisados por un moderador administrativo.
+              Para proteger la integridad de ABRAZAR+ y prevenir fraudes, los cambios de perfil son revisados por un moderador administrativo.
             </p>
 
             <form onSubmit={handleSubmitChangeRequest} className="space-y-4">

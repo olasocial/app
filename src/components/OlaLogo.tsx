@@ -57,9 +57,9 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
         />
         <div className="flex flex-col">
           <span className="text-xs font-bold bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent leading-none">
-            Ola Social
+            ABRAZAR<span className="text-amber-500 font-extrabold">+</span>
           </span>
-          <span className="text-[10px] text-slate-500 leading-none">Abrazos que conectan</span>
+          <span className="text-[10px] text-slate-500 leading-none font-medium">Abrazos Digitales</span>
         </div>
       </div>
     );
@@ -110,12 +110,12 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
         <div className="flex flex-col">
           <div className="flex items-center gap-1">
             <span className="font-['Outfit',sans-serif] text-xl font-extrabold tracking-tight bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              Ola Social
+              ABRAZAR<span className="text-amber-500 font-black">+</span>
             </span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
           </div>
           <span className="text-[10px] tracking-wider uppercase font-semibold text-sky-700/80 -mt-0.5 hidden sm:inline-block">
-            Abrazos que conectan
+            Abrazos Digitales
           </span>
         </div>
       </div>
@@ -159,7 +159,7 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
         >
           <img
             src="/logo.png"
-            alt="Ola Social - Abrazos que conectan personas"
+            alt="ABRAZAR+ (Abrazos Digitales) - Crece junto a una comunidad real"
             className="w-24 h-24 sm:w-36 sm:h-36 md:w-48 md:h-48 object-contain drop-shadow-xl sm:drop-shadow-2xl rounded-2xl sm:rounded-3xl"
           />
 
@@ -188,16 +188,19 @@ export const OlaLogo: React.FC<OlaLogoProps> = ({
       >
         <div className="inline-flex items-center gap-1.5 sm:gap-2">
           <h1 className="font-['Outfit',sans-serif] text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
-            Ola Social
+            ABRAZAR<span className="text-amber-500 font-black">+</span>
           </h1>
+          <span className="text-xs sm:text-sm font-bold text-slate-700 bg-slate-100/90 border border-slate-200/80 px-2.5 py-0.5 rounded-full">
+            Abrazos Digitales
+          </span>
           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 animate-bounce shrink-0" />
         </div>
-        <p className="mt-0.5 sm:mt-1 text-xs sm:text-base font-medium text-slate-600 max-w-md mx-auto">
-          "Abrazos que conectan personas."
+        <p className="mt-1 sm:mt-1.5 text-xs sm:text-base font-semibold text-slate-700 max-w-md mx-auto">
+          "Crece junto a una comunidad real."
         </p>
-        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70 max-w-[95vw]">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-          <span className="truncate">Descubrimiento y apoyo mutuo entre creadores</span>
+        <div className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-white/90 text-sky-800 border border-sky-200 shadow-2xs max-w-[95vw]">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
+          <span className="truncate">Apoyo voluntario 100% humano • Cero bots • Crecimiento colaborativo</span>
         </div>
       </motion.div>
     </div>
