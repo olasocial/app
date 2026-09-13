@@ -5,48 +5,119 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://your-project.supabase.co'
+  supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl !== 'https://your-project.supabase.co' &&
+  !supabaseUrl.includes('your-project')
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
   : null;
 
-export const ADMIN_PRIMARY_EMAIL = 'v19629049@gmail.com';
+export const ADMIN_PRIMARY_EMAIL = 'casinoconquistado@gmail.com';
+export const ADMIN_EMAILS = ['casinoconquistado@gmail.com', 'v19629049@gmail.com'];
 
-// Mock initial data for resilient offline / zero-config state
-export const createDefaultProfile = (email: string, displayName?: string): UserProfile => {
-  const isAdmin = email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase();
-  const username = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+/**
+ * Fetches user profile from Supabase 'profiles' table.
+ */
+export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
 
-  return {
-    id: isAdmin ? 'admin-root-001' : `user-${Math.random().toString(36).substring(2, 9)}`,
-    email,
-    display_name: displayName || (isAdmin ? 'Administrador Ola Social' : username),
-    username,
-    avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`,
-    role: isAdmin ? UserRole.SUPER_ADMIN : UserRole.USER,
-    status: AccountStatus.ACTIVE,
-    language: 'es',
-    country: 'América Latina',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    presence: PresenceStatus.ONLINE,
-    last_seen_at: new Date().toISOString(),
-    reputation: isAdmin ? 100 : 75,
-    hugs_done: isAdmin ? 420 : 12,
-    hugs_received: isAdmin ? 380 : 8,
-    hugs_verified: isAdmin ? 375 : 7,
-    stars_count: isAdmin ? 1850 : 35,
-    rating_avg: 4.9,
-    campaigns_created: isAdmin ? 8 : 1,
-    campaigns_completed: isAdmin ? 7 : 1,
-    confidence_level: 95,
-    user_level: isAdmin ? UserLevel.EMBAJADOR : UserLevel.EXPLORADOR,
-    warnings_count: 0,
-    is_18_confirmed: true,
-    terms_accepted_at: new Date().toISOString(),
-    mfa_enabled: isAdmin,
-    created_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as UserProfile;
+}
+
+/**
+ * Controlled upsert of profile in Supabase upon authenticated login.
+ * Guarantees that auth.users.id is the primary key.
+ */
+export async function upsertUserProfile(
+  profileData: Partial<UserProfile> & { id: string; email: string }
+): Promise<UserProfile | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  const isSuperAdminEmail = profileData.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase();
+
+  const payload: Partial<UserProfile> = {
+    ...profileData,
     updated_at: new Date().toISOString()
   };
-};
+
+  // If initial profile creation, set defaults
+  if (!payload.role) {
+    payload.role = isSuperAdminEmail ? UserRole.SUPER_ADMIN : UserRole.USER;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(payload, { onConflict: 'id' })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error upserting profile in Supabase:', error);
+    return null;
+  }
+
+  return data as UserProfile;
+}
+
+/**
+ * Fetches real community ranking from Supabase profiles ordered by stars and verified hugs.
+ */
+export async function fetchPublicRankings(): Promise<UserProfile[]> {
+  if (!isSupabaseConfigured || !supabase) return [];
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('status', AccountStatus.ACTIVE)
+    .order('stars_count', { ascending: false })
+    .limit(20);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data as UserProfile[];
+}
+
+/**
+ * Inserts immutable audit log into Supabase admin_audit_log
+ */
+export async function recordAuditLog(
+  adminId: string,
+  adminEmail: string,
+  action: string,
+  targetType: string,
+  targetId: string,
+  details: string
+): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) return;
+
+  await supabase.from('admin_audit_log').insert({
+    admin_id: adminId,
+    admin_email: adminEmail,
+    action,
+    target_type: targetType,
+    target_id: targetId,
+    details,
+    created_at: new Date().toISOString()
+  });
+}

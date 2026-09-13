@@ -28,6 +28,7 @@ interface HeaderProps {
   onSelectTab: (tab: string) => void;
   onOpenDonations: () => void;
   onOpenLegal: (type: 'terms' | 'privacy' | 'compliance' | 'guides') => void;
+  onOpenLogin: () => void;
   isScrolled: boolean;
 }
 
@@ -36,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   onOpenDonations,
   onOpenLegal,
+  onOpenLogin,
   isScrolled
 }) => {
   const { user, isAdmin, language, setLanguage, logout, togglePresence } = useAuth();
@@ -263,21 +265,31 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* User Profile Avatar / Dropdown */}
-            <div className="relative">
+            {/* User Profile Avatar / Dropdown OR Login Button */}
+            {!user ? (
               <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-sky-300 transition-all cursor-pointer"
+                type="button"
+                onClick={onOpenLogin}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-xs hover:shadow-md transition-all cursor-pointer"
               >
-                <img
-                  src={user?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=olasocial'}
-                  alt={user?.display_name}
-                  className="w-8 h-8 rounded-full border border-sky-300 object-cover"
-                />
-                <span className="hidden xl:inline text-xs font-semibold text-slate-800 max-w-[120px] truncate">
-                  {user?.display_name}
-                </span>
+                <User className="w-3.5 h-3.5" />
+                <span>Acceder</span>
               </button>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-sky-300 transition-all cursor-pointer"
+                >
+                  <img
+                    src={user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=olasocial'}
+                    alt={user.display_name}
+                    className="w-8 h-8 rounded-full border border-sky-300 object-cover"
+                  />
+                  <span className="hidden xl:inline text-xs font-semibold text-slate-800 max-w-[120px] truncate">
+                    {user.display_name}
+                  </span>
+                </button>
 
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 text-sm">
@@ -362,6 +374,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
             </div>
+          )}
 
             {/* Mobile menu toggle */}
             <button
@@ -444,6 +457,33 @@ export const Header: React.FC<HeaderProps> = ({
                 Panel Administrador
               </button>
             )}
+
+            <div className="pt-2 border-t border-slate-200 mt-2">
+              {!user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenLogin();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-sky-600 text-white font-bold text-sm text-center shadow-xs"
+                >
+                  Acceder con Google
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold text-sm text-left flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Cerrar sesión ({user.display_name})</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

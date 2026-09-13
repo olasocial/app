@@ -1,86 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Star, Heart, Award, ShieldCheck, Sparkles, Filter } from 'lucide-react';
-import { UserLevel } from '../types';
-
-interface RankUser {
-  rank: number;
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-  confirmedHugs: number;
-  starsCount: number;
-  avgRating: number;
-  userLevel: UserLevel;
-  weightedScore: number;
-}
+import { Trophy, Star, Heart, Award, ShieldCheck, Sparkles, Users, Loader2 } from 'lucide-react';
+import { UserProfile, UserLevel } from '../types';
+import { fetchPublicRankings } from '../services/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 export const RankingView: React.FC = () => {
-  const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'week'>('all');
+  const { user } = useAuth();
+  const [rankingUsers, setRankingUsers] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const rankData: RankUser[] = [
-    {
-      rank: 1,
-      id: 'u-1',
-      name: 'Elena Creadora Viajera',
-      username: 'elena_viajes',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      confirmedHugs: 842,
-      starsCount: 4180,
-      avgRating: 4.96,
-      userLevel: UserLevel.EMBAJADOR,
-      weightedScore: 9840
-    },
-    {
-      rank: 2,
-      id: 'u-2',
-      name: 'Carlos Tech Verde',
-      username: 'carlostechverde',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      confirmedHugs: 730,
-      starsCount: 3620,
-      avgRating: 4.95,
-      userLevel: UserLevel.EMBAJADOR,
-      weightedScore: 8910
-    },
-    {
-      rank: 3,
-      id: 'u-3',
-      name: 'Marina Arte & Olas',
-      username: 'marina_arte_olas',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      confirmedHugs: 690,
-      starsCount: 3410,
-      avgRating: 4.94,
-      userLevel: UserLevel.REFERENTE,
-      weightedScore: 8450
-    },
-    {
-      rank: 4,
-      id: 'u-4',
-      name: 'Mateo Creador Visual',
-      username: 'mateo_visual',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      confirmedHugs: 512,
-      starsCount: 2510,
-      avgRating: 4.9,
-      userLevel: UserLevel.IMPULSOR,
-      weightedScore: 6820
-    },
-    {
-      rank: 5,
-      id: 'u-5',
-      name: 'Lucía Gastronomía Viva',
-      username: 'lucia_cocina',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-      confirmedHugs: 480,
-      starsCount: 2360,
-      avgRating: 4.92,
-      userLevel: UserLevel.IMPULSOR,
-      weightedScore: 6390
-    }
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    const loadRankings = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchPublicRankings();
+        if (isMounted) {
+          // If logged in user exists and isn't yet in list, include them if they have stats
+          if (data.length === 0 && user) {
+            setRankingUsers([user]);
+          } else {
+            setRankingUsers(data);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching rankings:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadRankings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return 'bg-amber-400 text-amber-950 ring-4 ring-amber-100 shadow-md';
@@ -99,149 +55,106 @@ export const RankingView: React.FC = () => {
             <span>Puntuación Ponderada Anti-Spam</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Ranking de Mejores Abrazadores
+            Ranking de Creadores y Reputación
           </h2>
           <p className="text-amber-100 text-xs sm:text-sm mt-1 max-w-xl">
-            La posición se calcula a partir de la tasa de validación real, estrellas recibidas y antigüedad humana, nunca por cantidad mecánica de spam.
+            Calculado exclusivamente a partir de abrazos humanos verificados, sin compra de seguidores ni granjas automatizadas.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/10 p-1 rounded-2xl backdrop-blur-xs">
-          <button
-            onClick={() => setTimeFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              timeFilter === 'all' ? 'bg-white text-orange-700 shadow-xs' : 'text-white/80'
-            }`}
-          >
-            Histórico
-          </button>
-          <button
-            onClick={() => setTimeFilter('month')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              timeFilter === 'month' ? 'bg-white text-orange-700 shadow-xs' : 'text-white/80'
-            }`}
-          >
-            Este Mes
-          </button>
+        <div className="bg-white/15 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center shrink-0">
+          <div className="text-xs text-amber-100 font-semibold">Creadores Activos</div>
+          <div className="text-3xl font-black mt-0.5">{rankingUsers.length}</div>
+          <div className="text-[10px] text-amber-200 mt-0.5">Comunidad 100% Real</div>
         </div>
       </div>
 
-      {/* Podium Cards for Top 3 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {rankData.slice(0, 3).map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all text-center relative overflow-hidden"
-          >
-            <div className="absolute top-4 right-4">
-              <span
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm ${getRankBadge(
-                  item.rank
-                )}`}
-              >
-                #{item.rank}
-              </span>
-            </div>
-
-            <img
-              src={item.avatar}
-              alt={item.name}
-              className="w-20 h-20 rounded-full mx-auto object-cover border-4 border-slate-50 shadow-md mb-3"
-            />
-
-            <h3 className="font-extrabold text-slate-900 text-base">{item.name}</h3>
-            <p className="text-xs text-sky-600 font-medium">@{item.username}</p>
-
-            <div className="mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              <Award className="w-3.5 h-3.5 text-amber-500" />
-              <span>{item.userLevel}</span>
-            </div>
-
-            <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-              <div>
-                <div className="font-bold text-slate-800">{item.confirmedHugs}</div>
-                <div className="text-[10px] text-slate-400">Validados</div>
-              </div>
-              <div>
-                <div className="font-bold text-amber-600 flex items-center justify-center gap-0.5">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                  <span>{item.avgRating}</span>
-                </div>
-                <div className="text-[10px] text-slate-400">Rating</div>
-              </div>
-              <div>
-                <div className="font-bold text-emerald-600">{item.weightedScore}</div>
-                <div className="text-[10px] text-slate-400">Puntos</div>
-              </div>
-            </div>
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="bg-white rounded-3xl p-12 border border-slate-100 text-center flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+          <p className="text-xs text-slate-500 font-medium">Consultando ranking en tiempo real en Supabase...</p>
+        </div>
+      ) : rankingUsers.length === 0 ? (
+        /* Real Empty State - Zero Simulated Records */
+        <div className="bg-white rounded-3xl p-12 border border-slate-100 text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+            <Trophy className="w-8 h-8" />
           </div>
-        ))}
-      </div>
-
-      {/* Table for Full Ranking */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-extrabold text-slate-900 text-base">Tabla General de la Comunidad</h3>
-          <span className="text-xs text-slate-400">Actualizado en tiempo real</span>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">Aún no hay creadores en el ranking</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Sé el primero en vincular tus perfiles sociales, publicar o completar campañas de abrazos legítimos y ganar estrellas.
+            </p>
+          </div>
         </div>
+      ) : (
+        /* Real Users List */
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-4">
+          <div className="divide-y divide-slate-100">
+            {rankingUsers.map((u, index) => {
+              const rank = index + 1;
+              const weightedScore = (u.hugs_verified || 0) * 10 + (u.stars_count || 0);
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-50 text-slate-700 uppercase font-bold text-[10px] tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Posición</th>
-                <th className="px-6 py-4">Creador / Usuario</th>
-                <th className="px-6 py-4">Nivel</th>
-                <th className="px-6 py-4 text-center">Abrazos Validados</th>
-                <th className="px-6 py-4 text-center">Estrellas</th>
-                <th className="px-6 py-4 text-center">Rating</th>
-                <th className="px-6 py-4 text-right">Puntuación Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rankData.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-6 py-4 font-extrabold text-slate-900">
-                    <span
-                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
-                        row.rank <= 3 ? 'font-black text-amber-700 bg-amber-100' : 'text-slate-600'
-                      }`}
+              return (
+                <div
+                  key={u.id}
+                  className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-slate-50/60 rounded-2xl px-3 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Rank Badge */}
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 ${getRankBadge(
+                        rank
+                      )}`}
                     >
-                      {row.rank}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={row.avatar}
-                        alt={row.name}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      <div>
-                        <div className="font-bold text-slate-900">{row.name}</div>
-                        <div className="text-[11px] text-slate-400">@{row.username}</div>
-                      </div>
+                      {rank}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-slate-800">{row.userLevel}</td>
-                  <td className="px-6 py-4 text-center font-bold text-slate-900">
-                    {row.confirmedHugs}
-                  </td>
-                  <td className="px-6 py-4 text-center font-bold text-amber-500">
-                    {row.starsCount}
-                  </td>
-                  <td className="px-6 py-4 text-center font-bold text-slate-800">
-                    ★ {row.avgRating}
-                  </td>
-                  <td className="px-6 py-4 text-right font-extrabold text-emerald-600">
-                    {row.weightedScore} pts
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+                    {/* Avatar */}
+                    <img
+                      src={u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username || 'creator'}`}
+                      alt={u.display_name}
+                      className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0"
+                    />
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-slate-900 text-sm">{u.display_name}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                          {u.user_level}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">@{u.username || u.email.split('@')[0]}</p>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-6 text-right justify-between sm:justify-end">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Abrazos Válidos</span>
+                      <span className="font-extrabold text-slate-800 text-sm">{u.hugs_verified || 0}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Estrellas</span>
+                      <span className="font-extrabold text-amber-500 text-sm flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                        {u.stars_count || 0}
+                      </span>
+                    </div>
+
+                    <div className="pl-3 border-l border-slate-100 text-right">
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Score OLA</span>
+                      <span className="font-black text-rose-600 text-base">{weightedScore}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

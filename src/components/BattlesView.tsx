@@ -85,7 +85,18 @@ export const BattlesView: React.FC = () => {
 
       {/* Active Battles List */}
       <div className="space-y-6">
-        {activeBattles.map((battle) => {
+        {activeBattles.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 border border-slate-100 text-center space-y-3">
+            <div className="w-14 h-14 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto">
+              <Swords className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-extrabold text-slate-900">No hay batallas activas en este momento</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Las batallas de creadores se programan entre participantes comunitarios que alcancen el umbral interno de 1.000.000 de abrazos verificados.
+            </p>
+          </div>
+        ) : (
+          activeBattles.map((battle) => {
           const totalPledges = battle.creator1_pledges + battle.creator2_pledges;
           const p1Percent = totalPledges > 0 ? Math.round((battle.creator1_pledges / totalPledges) * 100) : 50;
           const p2Percent = 100 - p1Percent;
@@ -171,7 +182,7 @@ export const BattlesView: React.FC = () => {
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Evidence Upload Modal with AI Assistant */}

@@ -270,3 +270,7 @@ export interface PlatformPolicyVersion {
   policy_source_url: string;
   notes: string;
 }
+
+export type AuditLogEntry = AdminAuditLog;
+export type CampaignTask = Task;
+

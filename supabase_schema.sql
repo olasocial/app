@@ -1,6 +1,7 @@
 -- ============================================================
 -- OLA SOCIAL - FULL PRODUCTION SUPABASE POSTGRESQL SCHEMA (2026)
--- Conforme al Prompt Maestro: RLS, Auditoría Inmutable, Prevención Antifraude
+-- Conforme a Directivas: RLS, Auditoría Inmutable, Prevención Antifraude,
+-- Super Admin Inmutable e Integración Real con Realtime
 -- ============================================================
 
 -- Extensions
@@ -38,7 +39,17 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Social Profiles (Locked once confirmed, duplicate prevention constraint)
+-- 2. User Roles Table (Role separation)
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('USER', 'VERIFIED_USER', 'MODERATOR', 'SUPPORT', 'ADMIN', 'SUPER_ADMIN')),
+  granted_by UUID REFERENCES public.profiles(id),
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, role)
+);
+
+-- 3. Social Profiles (Locked once confirmed, duplicate prevention constraint)
 CREATE TABLE IF NOT EXISTS public.social_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -59,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.social_profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Campaigns
+-- 4. Campaigns
 CREATE TABLE IF NOT EXISTS public.campaigns (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   creator_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -79,7 +90,7 @@ CREATE TABLE IF NOT EXISTS public.campaigns (
   expires_at TIMESTAMPTZ NOT NULL
 );
 
--- 4. Tasks (Oportunidades de Abrazo)
+-- 5. Tasks (Oportunidades de Abrazo)
 CREATE TABLE IF NOT EXISTS public.campaign_tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   campaign_id UUID REFERENCES public.campaigns(id) ON DELETE CASCADE,
@@ -100,7 +111,7 @@ CREATE TABLE IF NOT EXISTS public.campaign_tasks (
   expires_at TIMESTAMPTZ NOT NULL
 );
 
--- 5. Task Ratings & Validations
+-- 6. Task Ratings & Validations
 CREATE TABLE IF NOT EXISTS public.task_ratings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   task_id UUID NOT NULL REFERENCES public.campaign_tasks(id) ON DELETE CASCADE,
@@ -111,7 +122,7 @@ CREATE TABLE IF NOT EXISTS public.task_ratings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Notifications
+-- 7. Notifications
 CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -123,7 +134,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. Admin Audit Log (Append-Only)
+-- 8. Admin Audit Log (Append-Only)
 CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   admin_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -136,7 +147,7 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 8. Fraud Events
+-- 9. Fraud Events
 CREATE TABLE IF NOT EXISTS public.fraud_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -148,7 +159,19 @@ CREATE TABLE IF NOT EXISTS public.fraud_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9. Creator Battles
+-- 10. Moderation Actions (Bans, suspensions, strikes)
+CREATE TABLE IF NOT EXISTS public.moderation_actions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  moderator_id UUID REFERENCES public.profiles(id),
+  action_type TEXT NOT NULL CHECK (action_type IN ('WARN', 'RATE_LIMIT', 'SUSPEND', 'BAN', 'UNBAN')),
+  reason TEXT NOT NULL,
+  notes TEXT,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 11. Creator Battles
 CREATE TABLE IF NOT EXISTS public.battle_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -162,7 +185,7 @@ CREATE TABLE IF NOT EXISTS public.battle_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 10. Donations to OLA SOCIAL
+-- 12. Donations to OLA SOCIAL
 CREATE TABLE IF NOT EXISTS public.donations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -173,8 +196,52 @@ CREATE TABLE IF NOT EXISTS public.donations (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Row Level Security (RLS)
+-- ============================================================
+-- SUPER ADMIN PROTECTION & PROMOTION TRIGGERS
+-- ============================================================
+
+-- Function: Ensure PRIMARY ADMIN (casinoconquistado@gmail.com) always gets SUPER_ADMIN
+CREATE OR REPLACE FUNCTION public.handle_primary_admin_role()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF LOWER(NEW.email) = 'casinoconquistado@gmail.com' THEN
+    NEW.role := 'SUPER_ADMIN';
+    NEW.status := 'ACTIVE';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER trigger_primary_admin_role
+BEFORE INSERT OR UPDATE ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION public.handle_primary_admin_role();
+
+-- Function: Block any attempt to delete, ban, or downgrade the Super Admin
+CREATE OR REPLACE FUNCTION public.protect_super_admin()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF LOWER(OLD.email) = 'casinoconquistado@gmail.com' THEN
+    IF TG_OP = 'DELETE' THEN
+      RAISE EXCEPTION 'Operación denegada: No es posible eliminar la cuenta del Super Administrador principal.';
+    ELSIF TG_OP = 'UPDATE' THEN
+      IF NEW.role != 'SUPER_ADMIN' OR NEW.status != 'ACTIVE' THEN
+        RAISE EXCEPTION 'Operación denegada: No es posible degradar ni bloquear la cuenta del Super Administrador principal.';
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER trigger_protect_super_admin
+BEFORE UPDATE OR DELETE ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION public.protect_super_admin();
+
+-- ============================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================================
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaign_tasks ENABLE ROW LEVEL SECURITY;
@@ -182,18 +249,66 @@ ALTER TABLE public.task_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fraud_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.moderation_actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.battle_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.donations ENABLE ROW LEVEL SECURITY;
 
--- Public profiles are viewable by all authenticated users
-CREATE POLICY "Profiles viewable by authenticated users" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+-- Helper function: is_admin
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id AND role IN ('ADMIN', 'SUPER_ADMIN')
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
 
--- Social profiles viewable by all, editable by owner
-CREATE POLICY "Social profiles viewable by all" ON public.social_profiles FOR SELECT USING (true);
-CREATE POLICY "Users can insert own social profile" ON public.social_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Profiles Policies
+CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "User update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Admin update any profile" ON public.profiles FOR UPDATE USING (public.is_admin(auth.uid()));
 
--- Tasks viewable by all authenticated users
-CREATE POLICY "Tasks viewable by all" ON public.campaign_tasks FOR SELECT USING (true);
-CREATE POLICY "Users can claim available task" ON public.campaign_tasks FOR UPDATE USING (auth.uid() = assigned_user_id OR assigned_user_id IS NULL);
+-- Social Profiles Policies
+CREATE POLICY "Social profiles public read" ON public.social_profiles FOR SELECT USING (true);
+CREATE POLICY "User create own social profile" ON public.social_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "User update own social profile" ON public.social_profiles FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "User delete own social profile" ON public.social_profiles FOR DELETE USING (auth.uid() = user_id);
 
--- Notifications viewable by owner
-CREATE POLICY "User notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id);
+-- Campaigns Policies
+CREATE POLICY "Campaigns public read" ON public.campaigns FOR SELECT USING (true);
+CREATE POLICY "Authenticated user create campaign" ON public.campaigns FOR INSERT WITH CHECK (auth.uid() = creator_id);
+CREATE POLICY "Creator update own campaign" ON public.campaigns FOR UPDATE USING (auth.uid() = creator_id OR public.is_admin(auth.uid()));
+
+-- Tasks Policies
+CREATE POLICY "Tasks public read" ON public.campaign_tasks FOR SELECT USING (true);
+CREATE POLICY "Creator insert task" ON public.campaign_tasks FOR INSERT WITH CHECK (auth.uid() = creator_id);
+CREATE POLICY "User claim or update task" ON public.campaign_tasks FOR UPDATE USING (
+  auth.uid() = assigned_user_id 
+  OR assigned_user_id IS NULL 
+  OR auth.uid() = creator_id 
+  OR public.is_admin(auth.uid())
+);
+
+-- Notifications Policies
+CREATE POLICY "Owner read own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Owner update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+
+-- Admin Audit Log (Append-Only for Authenticated Users & Admins, no UPDATE or DELETE allowed)
+CREATE POLICY "Admins read audit logs" ON public.admin_audit_log FOR SELECT USING (public.is_admin(auth.uid()));
+CREATE POLICY "Audit logs insert only" ON public.admin_audit_log FOR INSERT WITH CHECK (true);
+
+-- Fraud Events Policies
+CREATE POLICY "Admins read fraud events" ON public.fraud_events FOR SELECT USING (public.is_admin(auth.uid()));
+CREATE POLICY "Admins manage fraud events" ON public.fraud_events FOR ALL USING (public.is_admin(auth.uid()));
+
+-- Battles Policies
+CREATE POLICY "Battles public read" ON public.battle_events FOR SELECT USING (true);
+CREATE POLICY "Admin manage battles" ON public.battle_events FOR ALL USING (public.is_admin(auth.uid()));
+
+-- Realtime Publication for live syncing
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.campaign_tasks, public.campaigns, public.notifications, public.battle_events;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END;
+$$;
