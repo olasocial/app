@@ -3,7 +3,8 @@ import { ShieldCheck, Loader2, AlertCircle, RefreshCw, CheckCircle2 } from 'luci
 import {
   TURNSTILE_SITE_KEY,
   verifyTurnstileTokenServerSide,
-  isTurnstileProductionConfigured
+  isTurnstileProductionConfigured,
+  loadTurnstile
 } from '../services/turnstileService';
 
 interface TurnstileWidgetProps {
@@ -14,25 +15,6 @@ interface TurnstileWidgetProps {
 
 export type TurnstileState = 'IDLE' | 'VERIFYING' | 'VERIFIED' | 'EXPIRED' | 'ERROR';
 
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (
-        container: HTMLElement | string,
-        params: {
-          sitekey: string;
-          theme?: 'light' | 'dark' | 'auto';
-          callback?: (token: string) => void;
-          'expired-callback'?: () => void;
-          'error-callback'?: (err: any) => void;
-        }
-      ) => string;
-      reset: (widgetId?: string) => void;
-      remove: (widgetId?: string) => void;
-    };
-  }
-}
-
 export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   onVerifySuccess,
   onVerifyExpired,
@@ -42,7 +24,6 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   const widgetIdRef = useRef<string | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const isRenderingRef = useRef<boolean>(false);
-  const renderWidgetRef = useRef<(() => void) | null>(null);
   const [state, setState] = useState<TurnstileState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -61,142 +42,87 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
     };
   });
 
+  const safeRemoveWidget = () => {
+    const id = widgetIdRef.current;
+    if (!id) return;
+    widgetIdRef.current = null;
+
+    if (typeof window !== 'undefined' && window.turnstile && typeof window.turnstile.remove === 'function') {
+      try {
+        window.turnstile.remove(id);
+      } catch {
+        // Suppress benign internal turnstile DOM detachment warnings
+      }
+    }
+  };
+
+  const renderWidget = async () => {
+    if (!isMountedRef.current || !containerRef.current) return;
+    if (widgetIdRef.current || isRenderingRef.current) return;
+
+    isRenderingRef.current = true;
+    try {
+      const turnstile = await loadTurnstile();
+      if (!isMountedRef.current || !containerRef.current) return;
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+
+      const id = turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: 'light',
+        callback: async (token: string) => {
+          if (!isMountedRef.current) return;
+          setState('VERIFYING');
+          setErrorMessage(null);
+
+          const verifyResult = await verifyTurnstileTokenServerSide(token);
+          if (!isMountedRef.current) return;
+
+          if (verifyResult.success) {
+            setState('VERIFIED');
+            callbacksRef.current.onVerifySuccess(token);
+          } else {
+            setState('ERROR');
+            const err = verifyResult.message || 'No pudimos verificar que eres una persona.';
+            setErrorMessage(err);
+            callbacksRef.current.onVerifyError(err);
+          }
+        },
+        'expired-callback': () => {
+          if (!isMountedRef.current) return;
+          setState('EXPIRED');
+          setErrorMessage('La verificación humana expiró. Completa nuevamente la verificación.');
+          callbacksRef.current.onVerifyExpired();
+        },
+        'error-callback': () => {
+          if (!isMountedRef.current) return;
+          setState('ERROR');
+          const errText = 'Error en el widget de verificación humana. Inténtalo de nuevo.';
+          setErrorMessage(errText);
+          callbacksRef.current.onVerifyError(errText);
+        }
+      });
+
+      widgetIdRef.current = id;
+    } catch (err: any) {
+      if (!isMountedRef.current) return;
+      setState('ERROR');
+      const errText = err?.message || 'No se pudo cargar Cloudflare Turnstile. Comprueba tu conexión.';
+      setErrorMessage(errText);
+      callbacksRef.current.onVerifyError(errText);
+    } finally {
+      isRenderingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     isMountedRef.current = true;
-    let loadHandler: (() => void) | null = null;
-    let scriptElement: HTMLScriptElement | null = null;
-
-    const safeRemoveWidget = () => {
-      const id = widgetIdRef.current;
-      if (!id) return;
-      widgetIdRef.current = null;
-
-      if (typeof window !== 'undefined' && window.turnstile && typeof window.turnstile.remove === 'function') {
-        try {
-          if (containerRef.current && document.body.contains(containerRef.current)) {
-            window.turnstile.remove(id);
-          }
-        } catch {
-          // Suppress benign internal turnstile DOM detachment warnings
-        }
-      }
-    };
-
-    const renderWidget = () => {
-      if (!isMountedRef.current || !containerRef.current || !window.turnstile) return;
-      if (widgetIdRef.current || isRenderingRef.current) return;
-
-      isRenderingRef.current = true;
-      try {
-        if (containerRef.current) {
-          containerRef.current.innerHTML = '';
-        }
-
-        const id = window.turnstile.render(containerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: 'light',
-          callback: async (token: string) => {
-            if (!isMountedRef.current) return;
-            setState('VERIFYING');
-            setErrorMessage(null);
-
-            const verifyResult = await verifyTurnstileTokenServerSide(token);
-            if (!isMountedRef.current) return;
-
-            if (verifyResult.success) {
-              setState('VERIFIED');
-              callbacksRef.current.onVerifySuccess(token);
-            } else {
-              setState('ERROR');
-              const err = verifyResult.message || 'No pudimos verificar que eres una persona.';
-              setErrorMessage(err);
-              callbacksRef.current.onVerifyError(err);
-            }
-          },
-          'expired-callback': () => {
-            if (!isMountedRef.current) return;
-            setState('EXPIRED');
-            setErrorMessage('La verificación humana expiró. Completa nuevamente la verificación.');
-            callbacksRef.current.onVerifyExpired();
-          },
-          'error-callback': () => {
-            if (!isMountedRef.current) return;
-            setState('ERROR');
-            const errText = 'Error en el widget de verificación humana. Inténtalo de nuevo.';
-            setErrorMessage(errText);
-            callbacksRef.current.onVerifyError(errText);
-          }
-        });
-
-        widgetIdRef.current = id;
-      } catch (e) {
-        console.warn('Turnstile render warning:', e);
-      } finally {
-        isRenderingRef.current = false;
-      }
-    };
-
-    renderWidgetRef.current = renderWidget;
-
-    const existingScript = document.querySelector<HTMLScriptElement>('script[src*="turnstile/v0/api.js"]');
-
-    if (window.turnstile) {
-      if (typeof (window.turnstile as any).ready === 'function') {
-        (window.turnstile as any).ready(() => {
-          if (isMountedRef.current) renderWidget();
-        });
-      } else {
-        renderWidget();
-      }
-    } else if (!existingScript) {
-      const script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-      script.async = true;
-      script.defer = true;
-      scriptElement = script;
-
-      loadHandler = () => {
-        if (isMountedRef.current) {
-          if (window.turnstile && typeof (window.turnstile as any).ready === 'function') {
-            (window.turnstile as any).ready(() => {
-              if (isMountedRef.current) renderWidget();
-            });
-          } else {
-            renderWidget();
-          }
-        }
-      };
-      script.addEventListener('load', loadHandler);
-
-      script.onerror = () => {
-        if (isMountedRef.current) {
-          setState('ERROR');
-          setErrorMessage('No se pudo cargar Cloudflare Turnstile. Comprueba tu conexión.');
-          callbacksRef.current.onVerifyError('No se pudo cargar Cloudflare Turnstile.');
-        }
-      };
-      document.head.appendChild(script);
-    } else {
-      scriptElement = existingScript;
-      loadHandler = () => {
-        if (isMountedRef.current) {
-          if (window.turnstile && typeof (window.turnstile as any).ready === 'function') {
-            (window.turnstile as any).ready(() => {
-              if (isMountedRef.current) renderWidget();
-            });
-          } else {
-            renderWidget();
-          }
-        }
-      };
-      existingScript.addEventListener('load', loadHandler);
-    }
+    renderWidget();
 
     return () => {
       isMountedRef.current = false;
-      if (scriptElement && loadHandler) {
-        scriptElement.removeEventListener('load', loadHandler);
-      }
       safeRemoveWidget();
     };
   }, []);
@@ -209,18 +135,10 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         window.turnstile.reset(widgetIdRef.current);
         return;
       } catch {
-        // if reset fails, safely remove before re-rendering
-        if (typeof window !== 'undefined' && window.turnstile && typeof window.turnstile.remove === 'function') {
-          try {
-            window.turnstile.remove(widgetIdRef.current);
-          } catch {
-            // ignore
-          }
-        }
-        widgetIdRef.current = null;
+        safeRemoveWidget();
       }
     }
-    renderWidgetRef.current?.();
+    renderWidget();
   };
 
   return (

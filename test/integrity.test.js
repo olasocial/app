@@ -38,18 +38,42 @@ test('Database Schema: SQL schema includes immutable admin triggers and RLS', ()
   );
 });
 
-test('Security & Verification: Cloudflare Turnstile bot protection present', () => {
+test('Security & Verification: Cloudflare Turnstile bot protection present and stabilized', () => {
   const turnstileService = fs.readFileSync('./src/services/turnstileService.ts', 'utf8');
   assert.ok(
     turnstileService.includes('TURNSTILE'),
     'Turnstile service must be present'
   );
+  assert.ok(
+    turnstileService.includes('loadTurnstile'),
+    'Turnstile service must export loadTurnstile function'
+  );
+  assert.ok(
+    turnstileService.includes('render=explicit'),
+    'Turnstile service must use explicit render parameter'
+  );
+
   const turnstileWidget = fs.readFileSync('./src/components/TurnstileWidget.tsx', 'utf8');
   assert.ok(
-    turnstileWidget.includes('turnstile'),
-    'TurnstileWidget component must exist'
+    turnstileWidget.includes('loadTurnstile'),
+    'TurnstileWidget component must use loadTurnstile'
   );
+
+  // Anti-regression check: turnstile.ready() MUST NOT be used with async/defer scripts
+  const srcFiles = fs.readdirSync('./src', { recursive: true });
+  for (const file of srcFiles) {
+    const fullPath = path.join('./src', file);
+    if (fs.statSync(fullPath).isFile() && (file.endsWith('.ts') || file.endsWith('.tsx'))) {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      assert.strictEqual(
+        content.includes('.ready(') || content.includes('turnstile.ready'),
+        false,
+        `File ${fullPath} must not call turnstile.ready() to avoid TurnstileError with async/defer scripts`
+      );
+    }
+  }
 });
+
 
 test('Codebase Cleanliness: Zero Math.random mock simulation in core context', () => {
   const olaContext = fs.readFileSync('./src/context/OlaSocialContext.tsx', 'utf8');
@@ -115,5 +139,39 @@ test('Database Hardening: is_admin uses search_path and prevents privilege escal
     'Audit logs must not have unrestricted WITH CHECK (true) insertion'
   );
 });
+
+test('Turnstile Loader Architecture: Singleton, explicit render, zero turnstile.ready()', () => {
+  const code = fs.readFileSync('./src/services/turnstileService.ts', 'utf8');
+
+  // Verify URL configuration
+  assert.match(
+    code,
+    /https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?onload=__olaTurnstileCallback&render=explicit/,
+    'TURNSTILE_SCRIPT_URL must specify onload callback and explicit render'
+  );
+
+  // Verify singleton loader promise exists
+  assert.ok(
+    code.includes('turnstileLoaderPromise'),
+    'Loader must use a singleton promise to avoid multiple script injections'
+  );
+
+  // Verify timeout and polling guards
+  assert.ok(
+    code.includes('timeoutMs'),
+    'Loader must support timeout guard'
+  );
+  assert.ok(
+    code.includes('window.__olaTurnstileCallback'),
+    'Loader must declare global callback window.__olaTurnstileCallback'
+  );
+
+  // Verify error cleanup resets the singleton
+  assert.ok(
+    code.includes('turnstileLoaderPromise = null'),
+    'Loader must reset promise on failure to allow retry'
+  );
+});
+
 
 
