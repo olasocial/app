@@ -1,0 +1,6 @@
+{
+  "name": "Ola Social",
+  "description": "ABRAZAR+ (Abrazos Digitales): WebApp SaaS social de crecimiento colaborativo y descubrimiento comunitario auténtico entre creadores de contenido sin automatizaciones artificiales.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
