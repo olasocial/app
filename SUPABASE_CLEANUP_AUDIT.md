@@ -3,7 +3,7 @@
 **Fecha de Auditoría:** 13 de Septiembre de 2026  
 **Entorno Objetivo:** Supabase Production (`ocyjnplyywvctqikjrrh.supabase.co`)  
 **Política Operativa:** Cero Datos Simulados — Conservación Irrestricta de Datos Reales  
-**Administrador Principal Protegido:** `v19629049@gmail.com` (`SUPER_ADMIN`)
+**Administradores Protegidos:** `Authorized administrative operators` (`SUPER_ADMIN`)
 
 ---
 
@@ -16,7 +16,7 @@ Conforme a las directivas de OLA SOCIAL, ningún dato es eliminado sin categoriz
 | **REAL** | Creado por un usuario legítimo registrado a través de Supabase Auth, o configuración operativa crítica. | **CONSERVAR SIEMPRE**. Prohibida su eliminación. |
 | **SIMULADO** | Datos generados mediante algoritmos, scripts de seeding, bucles automáticos o datos mock. | **ELIMINAR**. Reemplazar por estado vacío profesional o consulta real. |
 | **PRUEBA** | Creado expresamente con fines de test en desarrollo/staging (ej: cuentas `@example.com`). | **ELIMINAR** previa confirmación y backup. |
-| **DUDOSO** | Registros inconsistentes o desalineados que requieren revisión humana del administrador. | **NO ELIMINAR AUTOMÁTICAMENTE**. Notificar a `v19629049@gmail.com`. |
+| **DUDOSO** | Registros inconsistentes o desalineados que requieren revisión humana del administrador. | **NO ELIMINAR AUTOMÁTICAMENTE**. Notificar a los operadores administrativos. |
 
 ---
 
@@ -25,14 +25,14 @@ Conforme a las directivas de OLA SOCIAL, ningún dato es eliminado sin categoriz
 ### 2.1 Tabla `auth.users`
 - **Función:** Autoridad absoluta de identidad de OLA SOCIAL.
 - **Registros Auditados:**
-  - `v19629049@gmail.com` -> **REAL** (Cuenta del Super Administrador, protegida por triggers inmutables).
+  - Cuentas de Super Administrador -> **REAL** (Protegidas por triggers inmutables).
   - Usuarios registrados mediante Google OAuth -> **REAL** (Conservar con integridad referencial).
   - Cuentas con dominio `@example.com` o identificadas como testing -> **PRUEBA** (Candidatas a depuración tras verificación).
 
 ### 2.2 Tabla `public.profiles`
 - **Función:** Perfiles de comunidad, estadísticas de abrazos, reputación y nivel.
 - **Auditoría:**
-  - Perfil del Administrador `v19629049@gmail.com` -> **REAL** (Preservar íntegramente).
+  - Perfiles de administración autorizados -> **REAL** (Preservar íntegramente).
   - Registros importados anteriormente desde `seedData.ts` (ej: `@marcos_musica`, `@elena_art`, etc.) -> **SIMULADO**.
   - *Acción ejecutada:* `src/data/seedData.ts` ha sido **eliminado** del código fuente. Las variables en memoria de `OlaSocialContext.tsx` ahora se inicializan en arrays vacíos `[]` y se nutren exclusivamente de consultas a `public.profiles` y `public.campaigns`.
   - Estadísticas derivadas: El conteo de usuarios online ahora responde a Supabase Realtime Presence y el conteo de usuarios registrados a la cantidad exacta de filas en `profiles`. Si existen 0 creadores, la interfaz presenta el estado vacío profesional.
@@ -105,14 +105,14 @@ Antes de ejecutar cualquier sentencia `DELETE` sobre registros marcados como `SI
    -- Ejemplo para cuentas de test identificadas
    DELETE FROM public.profiles 
    WHERE (email ILIKE '%@example.com' OR email ILIKE '%test%@%') 
-     AND email != 'v19629049@gmail.com';
+     AND role != 'SUPER_ADMIN';
    ```
 4. **Registrar la operación en el registro inmutable `admin_audit_log`:**
    ```sql
    INSERT INTO public.admin_audit_log (admin_id, admin_email, action, target_type, target_id, details)
    VALUES (
-     (SELECT id FROM public.profiles WHERE email = 'v19629049@gmail.com'),
-     'v19629049@gmail.com',
+     auth.uid(),
+     'admin@olasocial.example',
      'CLEANUP_EXECUTION',
      'DATABASE',
      'ALL_SIMULATED',
@@ -125,5 +125,5 @@ Antes de ejecutar cualquier sentencia `DELETE` sobre registros marcados como `SI
 ## 5. RESUMEN DE SEGURIDAD
 
 - **Cero pérdida de datos reales:** Los registros legítimos de usuarios, reputación comprobada e interacciones válidas se preservan al 100%.
-- **Super Administrador Intacto:** `v19629049@gmail.com` cuenta con disparadores `BEFORE UPDATE OR DELETE` que impiden la pérdida de su rol o eliminación accidental.
+- **Super Administradores Protegidos:** Las cuentas autorizadas cuentan con disparadores `BEFORE UPDATE OR DELETE` que impiden la pérdida de su rol o eliminación accidental.
 - **Frontend Limpio:** Desaparecieron completamente los datos ficticios y mensajes de depuración en la interfaz.

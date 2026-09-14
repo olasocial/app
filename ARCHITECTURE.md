@@ -38,16 +38,16 @@ La plataforma opera bajo el principio de **cero bots, cero métricas simuladas y
 |                                                                         |
 |   +--------------------------+     +--------------------------------+   |
 |   |      Supabase Auth       |     |     Row Level Security (RLS)   |   |
-|   |  - Email/Password        |     |  - profiles: owner / read all  |   |
-|   |  - Google OAuth          |     |  - tasks: assigned / creator   |   |
-|   |  - MFA TOTP (AAL1/AAL2)  |     |  - campaigns: public view      |   |
+|   |  - Google OAuth (Exclusivo)   |  - profiles: owner / read all  |   |
+|   |  - MFA TOTP (AAL1/AAL2)  |     |  - tasks: assigned / creator   |   |
+|   |  - Zero Password Storage |     |  - campaigns: public view      |   |
 |   +--------------------------+     |  - invitations: referrer only  |   |
 |                                    +--------------------------------+   |
 |   +--------------------------+     +--------------------------------+   |
 |   |   Realtime Engine        |     |      Anti-Fraud & Audit        |   |
 |   |  - Presence Channel      |     |  - audit_logs (append-only)    |   |
 |   |  - Postgres CDC Events   |     |  - Circular collusion checks   |   |
-|   +--------------------------+     |  - One email = One account     |   |
+|   +--------------------------+     |  - Immutable admin triggers    |   |
 |                                    +--------------------------------+   |
 +-------------------------------------------------------------------------+
 ```
@@ -104,9 +104,10 @@ $$\text{Reputación} = \text{Base} (100) + (\text{Abrazos Validados} \times 10) 
 ---
 
 ## 6. Autenticación Robusta y 2FA
-1. **Supabase Auth nativo:**
-   - Soporta Email/Contraseña y Google OAuth.
-   - Restricción estricta de cuenta única por correo electrónico (`One Email = One Account`).
+1. **Supabase Auth nativo con Google OAuth:**
+   - Inicio de sesión y registro federado exclusivo mediante Google OAuth.
+   - Eliminación total de contraseñas, minimizando riesgos de phishing y reutilización de claves.
+   - Vinculación federada verificada con control estricto de identidad en `public.profiles`.
 2. **TOTP MFA (RFC 6238):**
    - Transición de AAL1 a AAL2.
    - Códigos temporales de 6 dígitos con ventana de 30 segundos.

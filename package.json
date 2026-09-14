@@ -13,8 +13,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.js",
-    "git:push": "git add . && git commit -m 'chore: update webapp' && git push origin main"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -28,8 +27,7 @@
     "motion": "^12.23.24",
     "pg": "^8.23.0",
     "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "vite": "^6.2.3"
+    "react-dom": "^19.0.1"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

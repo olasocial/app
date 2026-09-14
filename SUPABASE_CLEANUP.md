@@ -24,7 +24,7 @@ Antes de realizar cualquier mantenimiento o depuración en Supabase:
    - **`REAL`**: Conservar intacto.
    - **`SIMULADO`**: Candidato a depuración previa confirmación.
    - **`PRUEBA`**: Cuentas de desarrollo candidatas a depuración.
-   - **`DUDOSO`**: Requiere revisión manual de `v19629049@gmail.com`.
+    - **`DUDOSO`**: Requiere revisión manual de los operadores autorizados.
 
 ---
 
@@ -44,14 +44,14 @@ SELECT count(*) FROM backup_profiles_YYYYMMDD;
 -- 3. Proceder a la depuración selectiva
 DELETE FROM public.profiles 
 WHERE (email ILIKE '%@example.com' OR email ILIKE '%dummy%')
-  AND email != 'v19629049@gmail.com';
+  AND role != 'SUPER_ADMIN';
 ```
 
 ---
 
 ## 4. INTEGRIDAD DE CUENTAS PROTEGIDAS
 
-- La cuenta de administración **`v19629049@gmail.com`** está protegida a nivel de base de datos por el trigger `protect_super_admin`.
+- Las cuentas de administración (`Authorized administrative operators`) con rol `SUPER_ADMIN` están protegidas a nivel de base de datos por el trigger `protect_super_admin`.
 - Intentar ejecutar un `DELETE` sobre dicha cuenta generará una excepción:
   `ERROR: Operación rechazada: La cuenta del Super Administrador principal está protegida contra eliminación.`
 

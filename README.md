@@ -19,7 +19,7 @@
 
 - **Batallas Culturales de Creadores**:
   - Arena comunitaria en vivo para creadores de alto prestigio.
-  - Verificación asistida de capturas y revisión humana obligatoria (Sección 29 y 31).
+  - Verificación asistida de capturas y revisión comunitaria obligatoria.
 
 - **Ranking Ponderado Antifraude**:
   - Algoritmo de puntuación por calidad, estrellas y antigüedad, neutralizando el spam.

@@ -14,7 +14,7 @@ Conforme a las directivas de seguridad de Supabase Auth:
 
 | Nivel | Descripción | Requisito en OLA SOCIAL |
 | :--- | :--- | :--- |
-| **`aal1`** | Autenticación con un solo factor (Google OAuth o Contraseña). | Acceso estándar de lectura para usuarios generales. |
+| **`aal1`** | Autenticación con un solo factor (Google OAuth federado). | Acceso estándar de lectura para usuarios generales. |
 | **`aal2`** | Autenticación reforzada con segundo factor (TOTP verificado). | **Requerido** para el acceso al Panel Administrativo de Producción y cambios críticos de perfil social. |
 
 ---

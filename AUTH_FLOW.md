@@ -45,8 +45,8 @@ En OLA SOCIAL, **Google OAuth a través de Supabase Auth** es el único método 
 
 ## 3. ROL DE SUPER ADMINISTRADOR
 
-El correo electrónico **`v19629049@gmail.com`** tiene asignado el rol **`SUPER_ADMIN`**.
-- La verificación de privilegios se realiza tanto en frontend (`isAdmin`) como en backend mediante la función SQL `public.is_admin(auth.uid())` y un trigger protector `protect_super_admin` que impide que nadie pueda retirarle el rol o eliminar la cuenta.
+Las cuentas autorizadas de operadores administrativos (**`Authorized administrative operators`**) tienen asignado el rol **`SUPER_ADMIN`**.
+- La verificación de privilegios se realiza tanto en frontend (`isAdmin`) como en backend mediante la función SQL `public.is_admin(auth.uid())` y un trigger protector `protect_super_admin` que impide que nadie pueda retirarle el rol o eliminar la cuenta autorizada.
 
 ---
 

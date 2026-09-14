@@ -203,5 +203,55 @@ test('Sole Authentication Method: Google OAuth only, zero email/password forms, 
   );
 });
 
+test('Permanent Secret Scanner: Zero high-entropy tokens, private keys or secrets committed', () => {
+  const secretPatterns = [
+    /ghp_[A-Za-z0-9]{20,}/,
+    /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/,
+    /sk_live_[A-Za-z0-9]{20,}/,
+    /AIzaSy[0-9A-Za-z\-_]{33}/,
+    /sbp_[a-f0-9]{40}/
+  ];
+
+  const scanDirectories = ['./src', './supabase', './public'];
+  const scanFiles = ['./index.html', './vite.config.ts', './tsconfig.json', './package.json', './.env.example'];
+
+  function scanDir(dir) {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== '.git' && entry.name !== 'dist') {
+          scanDir(fullPath);
+        }
+      } else if (entry.isFile()) {
+        checkFile(fullPath);
+      }
+    }
+  }
+
+  function checkFile(filePath) {
+    if (filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.ico')) return;
+    const content = fs.readFileSync(filePath, 'utf8');
+    for (const pattern of secretPatterns) {
+      assert.strictEqual(
+        pattern.test(content),
+        false,
+        `Security violation: High-entropy secret pattern detected in ${filePath}. Sensitive credentials must never be committed to source control.`
+      );
+    }
+  }
+
+  for (const dir of scanDirectories) {
+    scanDir(dir);
+  }
+  for (const file of scanFiles) {
+    if (fs.existsSync(file)) {
+      checkFile(file);
+    }
+  }
+});
+
+
 
 

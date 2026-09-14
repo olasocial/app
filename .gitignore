@@ -1,9 +1,37 @@
+# Dependencies
 node_modules/
-build/
+
+# Production builds
 dist/
+build/
+
+# Testing & Coverage
 coverage/
+
+# OS & Editor files
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
 *.log
-.env*
+npm-debug.log*
+yarn-debug.log*
+
+# Environment & Secrets
+.env
+.env.*
 !.env.example
+
+# Credentials, Keys & Database Dumps
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.dump
+*.backup
+*.sql.bak
 bun.lock

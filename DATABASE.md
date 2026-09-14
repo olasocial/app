@@ -12,7 +12,7 @@ El sistema de persistencia de OLA SOCIAL se ejecuta sobre **Supabase PostgreSQL 
    - `invite_code` es único en `profiles`.
    - Idempotencia en tareas mediante clave única o validación por disparador.
 3. **Inmutabilidad Administrativa:**
-   - La cuenta `v19629049@gmail.com` está protegida por el disparador `protect_super_admin` que bloquea su degradación de rol o eliminación, incluso ante sentencias directas.
+   - Las cuentas designadas de operadores administrativos (`Authorized administrative operators`) están protegidas por el disparador `protect_super_admin` que bloquea su degradación de rol o eliminación, incluso ante sentencias directas en base de datos.
 4. **Auditoría Append-Only:**
    - Las operaciones sensibles se graban en `admin_audit_log`, tabla que prohíbe `UPDATE` y `DELETE` mediante RLS.
 

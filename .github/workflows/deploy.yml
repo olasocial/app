@@ -46,6 +46,15 @@ jobs:
     - name: Run Integrity Tests
       run: npm test
 
+    - name: Permanent Secret Scan (Source Tree)
+      run: |
+        echo "Scanning source code for exposed tokens, private keys or secrets..."
+        if grep -rEI "ghp_[A-Za-z0-9]{20,}|-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{20,}|sbp_[a-f0-9]{40}" --exclude-dir={.git,node_modules,dist} .; then
+          echo "::error::Security violation: High-entropy secret pattern detected in repository source files."
+          exit 1
+        fi
+        echo "Zero exposed secret patterns detected."
+
     - name: Validate Environment Configuration Presence
       run: |
         if [ -z "$VITE_SUPABASE_URL" ]; then
