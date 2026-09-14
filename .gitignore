@@ -8,7 +8,10 @@ build/
 # Testing & Coverage
 coverage/
 
-# OS & Editor files
+# Supabase CLI temp files
+.temp/
+supabase/.temp/
+
 .DS_Store
 Thumbs.db
 *.swp
