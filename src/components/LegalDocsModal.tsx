@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, ShieldCheck, FileText, HelpCircle, AlertCircle } from 'lucide-react';
+import { useI18n } from '../context/I18nContext';
 
 interface LegalDocsModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
   initialTab = 'terms',
   onClose
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'terms' | 'privacy' | 'compliance' | 'guides'>(
     initialTab
   );
@@ -25,7 +27,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
         <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-sky-600 shrink-0" />
-            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">Centro Legal y de Ayuda</h3>
+            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">{t('legal.title')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -45,7 +47,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Términos de Servicio
+            {t('legal.terms')}
           </button>
           <button
             onClick={() => setActiveTab('privacy')}
@@ -55,7 +57,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Privacidad
+            {t('legal.privacy')}
           </button>
           <button
             onClick={() => setActiveTab('compliance')}
@@ -65,7 +67,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Cumplimiento
+            {t('legal.compliance')}
           </button>
           <button
             onClick={() => setActiveTab('guides')}
@@ -75,7 +77,7 @@ export const LegalDocsModal: React.FC<LegalDocsModalProps> = ({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Guías & FAQ
+            {t('legal.guides')}
           </button>
         </div>
 

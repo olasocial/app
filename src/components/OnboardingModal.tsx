@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Check, Heart, Globe, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
+import { LanguageSelector } from './LanguageSelector';
 import { OlaLogo } from './OlaLogo';
 import { LanguageKey } from '../types';
 
@@ -10,7 +12,8 @@ interface OnboardingModalProps {
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete }) => {
-  const { user, updateProfile, setLanguage, language } = useAuth();
+  const { user, updateProfile } = useAuth();
+  const { t, language, setLanguage } = useI18n();
 
   const [is18Confirmed, setIs18Confirmed] = useState<boolean>(false);
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
@@ -48,49 +51,26 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
 
         <div className="space-y-4 sm:space-y-5 text-left">
           <div className="text-center">
-            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">Bienvenido a OLA SOCIAL</h3>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">{t('onboarding.welcome_title')}</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Hola, <span className="font-semibold text-slate-800">{user.email}</span>. Completa la activación de tu cuenta comunitaria.
+              Hola, <span className="font-semibold text-slate-800">{user.email}</span>. {t('onboarding.welcome_desc')}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700">Nombre de Creador o Apodo</label>
+            <label className="block text-xs font-bold text-slate-700">{t('onboarding.step_profile')}</label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={user.display_name || 'Tu nombre en la comunidad'}
+              placeholder={user.display_name || 'Nombre'}
               className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-sky-500 outline-none"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700">Idioma preferido</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setLanguage('es')}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                  language === 'es'
-                    ? 'bg-sky-50 border-sky-400 text-sky-800 font-bold'
-                    : 'border-slate-200 text-slate-600'
-                }`}
-              >
-                Español
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                  language === 'en'
-                    ? 'bg-sky-50 border-sky-400 text-sky-800 font-bold'
-                    : 'border-slate-200 text-slate-600'
-                }`}
-              >
-                English
-              </button>
-            </div>
+            <label className="block text-xs font-bold text-slate-700">{t('common.language')}</label>
+            <LanguageSelector variant="compact" />
           </div>
 
           {/* Legal and Compliance Verification (Section 26) */}
@@ -103,7 +83,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
                 className="mt-0.5 rounded text-sky-600 focus:ring-sky-500"
               />
               <span>
-                <strong>Confirmo que tengo 18 años o más</strong> y que participo voluntariamente en la comunidad.
+                <strong>{t('common.verified')} (18+)</strong>: {t('onboarding.rule_reciprocity_desc')}
               </span>
             </label>
 
@@ -115,7 +95,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
                 className="mt-0.5 rounded text-sky-600 focus:ring-sky-500"
               />
               <span>
-                Acepto los <strong>Términos de Servicio</strong>, las <strong>Políticas de Antifraude</strong> y el compromiso de interacciones 100% humanas.
+                {t('onboarding.rule_organic_desc')}
               </span>
             </label>
           </div>
@@ -130,7 +110,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
             }`}
           >
-            <span>{isSaving ? 'Guardando perfil...' : 'Entrar al Ecosistema OLA SOCIAL'}</span>
+            <span>{isSaving ? t('common.loading') : t('onboarding.complete_button')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

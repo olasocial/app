@@ -22,6 +22,7 @@ import {
   getAuthAssuranceLevel,
   attributeInviteCode
 } from '../services/supabaseClient';
+import { useI18n } from './I18nContext';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -51,12 +52,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { language, setLanguage: setGlobalLanguage } = useI18n();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [bannedReason, setBannedReason] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [language, setLanguageState] = useState<LanguageKey>('es');
   const [mfaNeedsVerification, setMfaNeedsVerification] = useState<boolean>(false);
   const [mfaFactors, setMfaFactors] = useState<MfaFactor[]>([]);
   const [activeMfaFactor, setActiveMfaFactor] = useState<MfaFactor | null>(null);
@@ -148,7 +149,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsBanned(false);
         setBannedReason(null);
         setUser(profile);
-        setLanguageState(profile.language || 'es');
+        if (profile.language && profile.language !== language) {
+          setGlobalLanguage(profile.language);
+        }
 
         // Check MFA Assurance Level and Factors
         if (isSupabaseConfigured && supabase) {
@@ -255,13 +258,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMounted = false;
     };
   }, []);
-
-  const setLanguage = async (lang: LanguageKey) => {
-    setLanguageState(lang);
-    if (user) {
-      await updateProfile({ language: lang });
-    }
-  };
 
   // Google OAuth Login
   const loginWithGoogle = async () => {
@@ -438,6 +434,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       !user.onboarding_completed &&
       (!user.is_18_confirmed || !user.terms_accepted_at)
   );
+
+  const setLanguage = (newLang: LanguageKey) => {
+    setGlobalLanguage(newLang);
+    if (user) {
+      updateProfile({ language: newLang });
+    }
+  };
 
   return (
     <AuthContext.Provider

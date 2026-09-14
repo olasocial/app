@@ -17,9 +17,11 @@ import {
 import { UserProfile } from '../types';
 import { fetchPublicRankings } from '../services/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 export const RankingView: React.FC = () => {
   const { user } = useAuth();
+  const { t, formatNumber } = useI18n();
   const [activeCategory, setActiveCategory] = useState<'reputacion' | 'abrazadores' | 'creadores' | 'invitadores'>('reputacion');
   const [rankingUsers, setRankingUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -66,13 +68,13 @@ export const RankingView: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-bold mb-2">
             <Trophy className="w-3.5 h-3.5 text-amber-200" />
-            <span>Puntuación Ponderada Anti-Spam</span>
+            <span>{t('ranking.title')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Ranking de Creadores y Reputación
+            {t('ranking.title')}
           </h2>
           <p className="text-amber-100 text-xs sm:text-sm mt-1 max-w-xl">
-            Calculado exclusivamente a partir de colaboraciones humanas verificadas en Supabase, sin bots ni cuentas fantasmas.
+            {t('ranking.subtitle')}
           </p>
         </div>
 
@@ -82,7 +84,7 @@ export const RankingView: React.FC = () => {
             className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-white/20"
           >
             <HelpCircle className="w-4 h-4" />
-            <span>Transparencia de Puntos</span>
+            <span>{t('ranking.formula_button')}</span>
           </button>
         </div>
       </div>
@@ -97,7 +99,7 @@ export const RankingView: React.FC = () => {
               : 'hover:text-slate-900'
           }`}
         >
-          Top Reputación
+          {t('ranking.tab_reputation')}
         </button>
         <button
           onClick={() => setActiveCategory('abrazadores')}
@@ -107,7 +109,7 @@ export const RankingView: React.FC = () => {
               : 'hover:text-slate-900'
           }`}
         >
-          Top Abrazadores
+          {t('ranking.tab_hugs')}
         </button>
         <button
           onClick={() => setActiveCategory('creadores')}
@@ -117,7 +119,7 @@ export const RankingView: React.FC = () => {
               : 'hover:text-slate-900'
           }`}
         >
-          Top Creadores
+          {t('ranking.tab_creators')}
         </button>
         <button
           onClick={() => setActiveCategory('invitadores')}
@@ -127,7 +129,7 @@ export const RankingView: React.FC = () => {
               : 'hover:text-slate-900'
           }`}
         >
-          Top Invitadores
+          {t('ranking.tab_invitations')}
         </button>
       </div>
 
@@ -135,7 +137,7 @@ export const RankingView: React.FC = () => {
       {isLoading ? (
         <div className="bg-white rounded-3xl p-12 border border-slate-100 text-center flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-          <p className="text-xs text-slate-500 font-medium">Consultando ranking en tiempo real en Supabase...</p>
+          <p className="text-xs text-slate-500 font-medium">{t('common.loading')}</p>
         </div>
       ) : rankingUsers.length === 0 ? (
         /* Real Empty State - Zero Simulated Records */
@@ -144,9 +146,9 @@ export const RankingView: React.FC = () => {
             <Trophy className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-slate-800">Aún no hay creadores en esta categoría</h3>
+            <h3 className="text-lg font-bold text-slate-800">{t('ranking.empty_ranking')}</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Colabora en campañas comunitarias o invita nuevos miembros para aparecer en el podio.
+              {t('ranking.subtitle')}
             </p>
           </div>
         </div>
@@ -158,12 +160,12 @@ export const RankingView: React.FC = () => {
               const rank = index + 1;
               const primaryStat =
                 activeCategory === 'abrazadores'
-                  ? `${u.hugs_verified || 0} validados`
+                  ? `${u.hugs_verified || 0}`
                   : activeCategory === 'creadores'
-                  ? `${u.campaigns_created || 0} campañas`
+                  ? `${u.campaigns_created || 0}`
                   : activeCategory === 'invitadores'
                   ? `${u.invitation_score || 0} pts`
-                  : `${(u.reputation_score !== undefined ? u.reputation_score : 100).toFixed(1)} pts`;
+                  : `${formatNumber(u.reputation_score !== undefined ? u.reputation_score : 100)} pts`;
 
               return (
                 <div
@@ -193,7 +195,7 @@ export const RankingView: React.FC = () => {
                           {u.display_name}
                         </span>
                         <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
-                          Nivel {u.level_number || 1} • {u.user_level || 'EXPLORADOR'}
+                          {t('nav.level_num', { num: u.level_number || 1 })} • {u.user_level || 'EXPLORADOR'}
                         </span>
                       </div>
                       <p className="text-[11px] sm:text-xs text-slate-400 truncate">@{u.username || u.email.split('@')[0]}</p>
@@ -203,12 +205,12 @@ export const RankingView: React.FC = () => {
                   {/* Stats */}
                   <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 pt-2.5 sm:pt-0 border-t border-slate-100 sm:border-t-0 pl-11 sm:pl-0">
                     <div className="text-left sm:text-right">
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Abrazos</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{t('lobby.metric_hugs_verified')}</span>
                       <span className="font-extrabold text-slate-800 text-xs sm:text-sm">{u.hugs_verified || 0}</span>
                     </div>
 
                     <div className="text-left sm:text-right">
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Estrellas</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{t('lobby.metric_stars')}</span>
                       <span className="font-extrabold text-amber-500 text-xs sm:text-sm flex items-center gap-1">
                         <Star className="w-3 sm:w-3.5 h-3 sm:h-3.5 fill-amber-400 shrink-0" />
                         {u.stars_count || 0}
@@ -216,14 +218,14 @@ export const RankingView: React.FC = () => {
                     </div>
 
                     <div className="text-left sm:text-right">
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Reputación</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{t('ranking.score_header')}</span>
                       <span className="font-extrabold text-emerald-600 text-xs sm:text-sm">
-                        {(u.reputation_score !== undefined ? u.reputation_score : 100).toFixed(1)}
+                        {formatNumber(u.reputation_score !== undefined ? u.reputation_score : 100)}
                       </span>
                     </div>
 
                     <div className="pl-3 border-l border-slate-200 sm:border-slate-100 text-right">
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Destacado</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{t('ranking.rank_header')}</span>
                       <span className="font-black text-rose-600 text-xs sm:text-sm">{primaryStat}</span>
                     </div>
                   </div>
@@ -242,7 +244,7 @@ export const RankingView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-teal-600" />
                 <h3 className="font-extrabold text-slate-900 text-base">
-                  Fórmula Oficial de Reputación
+                  {t('ranking.formula_modal_title')}
                 </h3>
               </div>
               <button
@@ -254,43 +256,24 @@ export const RankingView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600">
-              La reputación en OLA SOCIAL es un puntaje dinámico entre 0 y 1000 puntos gobernado por triggers y funciones RPC en la base de datos Supabase:
+              {t('ranking.formula_modal_desc')}
             </p>
 
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="font-bold text-slate-800">1. Puntuación Base Inicial</div>
-                <div className="text-slate-600 text-[11px] mt-0.5">
-                  Todo creador verificado comienza con <strong>100 puntos</strong> de confianza base.
-                </div>
+                <div className="font-bold text-slate-800">{t('ranking.formula_factor_1')}</div>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="font-bold text-teal-800">2. Abrazos y Tareas Validadas</div>
-                <div className="text-slate-600 text-[11px] mt-0.5">
-                  Cada apoyo corroborado por captura y tiempo de permanencia suma <strong>+10 puntos</strong> a tu reputación.
-                </div>
+                <div className="font-bold text-teal-800">{t('ranking.formula_factor_2')}</div>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="font-bold text-amber-800">3. Calificaciones y Estrellas</div>
-                <div className="text-slate-600 text-[11px] mt-0.5">
-                  Calificaciones de 5 estrellas de compañeros añaden <strong>+5 puntos</strong> ponderados.
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="font-bold text-sky-800">4. Red de Invitaciones Legítimas</div>
-                <div className="text-slate-600 text-[11px] mt-0.5">
-                  Cada invitado que valide su primera colaboración suma <strong>+25 puntos</strong> a tu score de invitador.
-                </div>
+                <div className="font-bold text-amber-800">{t('ranking.formula_factor_3')}</div>
               </div>
 
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
-                <div className="font-bold text-rose-800">5. Penalizaciones Anti-Colusión</div>
-                <div className="text-rose-700 text-[11px] mt-0.5">
-                  Disputas confirmadas o detección de intercambios circulares descuentan <strong>-50 puntos</strong> y aplican alertas.
-                </div>
+                <div className="font-bold text-rose-800">{t('ranking.formula_factor_4')}</div>
               </div>
             </div>
 
@@ -299,7 +282,7 @@ export const RankingView: React.FC = () => {
                 onClick={() => setShowFormulaModal(false)}
                 className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
               >
-                Entendido
+                {t('common.close')}
               </button>
             </div>
           </div>

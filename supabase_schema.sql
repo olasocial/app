@@ -642,4 +642,196 @@ BEGIN
 END;
 $$;
 
+-- ============================================================
+-- CENTRO DE ADMINISTRACIÓN TOTAL: TABLES & POLICIES (2026)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.user_restrictions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  restriction_key TEXT NOT NULL,
+  is_restricted BOOLEAN DEFAULT TRUE,
+  reason TEXT,
+  restricted_by UUID REFERENCES public.profiles(id),
+  restricted_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, restriction_key)
+);
+
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  category TEXT DEFAULT 'GENERAL',
+  description TEXT,
+  updated_by UUID REFERENCES public.profiles(id),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.feature_flags (
+  key TEXT PRIMARY KEY,
+  enabled BOOLEAN DEFAULT TRUE,
+  description TEXT,
+  category TEXT DEFAULT 'CORE',
+  reason TEXT,
+  updated_by UUID REFERENCES public.profiles(id),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.announcements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  link_url TEXT,
+  position TEXT DEFAULT 'FEED' CHECK (position IN ('BANNER', 'CARD', 'TOP_BAR', 'MODAL', 'FEED')),
+  priority INT DEFAULT 1,
+  status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('DRAFT', 'SCHEDULED', 'ACTIVE', 'PAUSED', 'EXPIRED', 'ARCHIVED')),
+  audience TEXT DEFAULT 'ALL' CHECK (audience IN ('ALL', 'NEW_USERS', 'ACTIVE_USERS', 'INACTIVE_USERS', 'SELECTED')),
+  start_at TIMESTAMPTZ DEFAULT NOW(),
+  end_at TIMESTAMPTZ,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('ANNOUNCEMENT', 'MAINTENANCE', 'SECURITY', 'UPDATE', 'INFO', 'WARNING', 'EVENT')),
+  audience TEXT NOT NULL CHECK (audience IN ('ALL', 'ACTIVE_USERS', 'NEW_USERS', 'SELECTED')),
+  target_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  is_urgent BOOLEAN DEFAULT FALSE,
+  action_url TEXT,
+  sent_count INT DEFAULT 0,
+  read_count INT DEFAULT 0,
+  status TEXT DEFAULT 'SENT' CHECK (status IN ('SENT', 'SCHEDULED', 'CANCELLED', 'EXPIRED')),
+  expires_at TIMESTAMPTZ,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.moderation_reports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reporter_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  reported_user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content_type TEXT DEFAULT 'USER' CHECK (content_type IN ('USER', 'TASK', 'CAMPAIGN', 'MESSAGE', 'PROFILE')),
+  content_id TEXT,
+  reason TEXT NOT NULL,
+  details TEXT,
+  evidence_url TEXT,
+  status TEXT DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'REVIEWING', 'ACTION_REQUIRED', 'RESOLVED', 'DISMISSED')),
+  assigned_to UUID REFERENCES public.profiles(id),
+  resolution_notes TEXT,
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_notes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  admin_id UUID NOT NULL REFERENCES public.profiles(id),
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.app_errors (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message TEXT NOT NULL,
+  stack_trace TEXT,
+  component TEXT,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  severity TEXT DEFAULT 'ERROR' CHECK (severity IN ('INFO', 'WARNING', 'ERROR', 'FATAL')),
+  resolved BOOLEAN DEFAULT FALSE,
+  resolved_by UUID REFERENCES public.profiles(id),
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.user_restrictions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feature_flags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.moderation_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_errors ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- SISTEMA DE DONACIONES Y APORTES "APOYAR OLA SOCIAL" (2026)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.donation_methods (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('PAYPAL', 'BINANCE_PAY', 'PAGO_MOVIL', 'BANK_TRANSFER', 'OTHER')),
+  description TEXT,
+  instructions TEXT,
+  public_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  icon TEXT,
+  logo_url TEXT,
+  qr_image_url TEXT,
+  status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED')),
+  display_order INTEGER NOT NULL DEFAULT 1,
+  warning_note TEXT DEFAULT 'Verifica cuidadosamente los datos del método antes de realizar cualquier aporte o transferencia.',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.donation_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  method_id UUID REFERENCES public.donation_methods(id) ON DELETE RESTRICT,
+  method_name TEXT NOT NULL,
+  method_type TEXT NOT NULL,
+  amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  currency TEXT NOT NULL DEFAULT 'USD',
+  reference TEXT NOT NULL,
+  donor_name TEXT,
+  is_anonymous BOOLEAN NOT NULL DEFAULT TRUE,
+  receipt_url TEXT,
+  user_comment TEXT,
+  status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'UNDER_REVIEW', 'CONFIRMED', 'REJECTED', 'CANCELLED')),
+  admin_notes TEXT,
+  reviewed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.donation_settings (
+  id TEXT PRIMARY KEY DEFAULT 'global',
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  title TEXT NOT NULL DEFAULT 'Apoyar OLA SOCIAL',
+  subtitle TEXT DEFAULT 'Tu aporte es voluntario y ayuda a mantener y mejorar OLA SOCIAL.',
+  description TEXT DEFAULT 'Cada contribución permite sostener la infraestructura, servidores, seguridad y evolución continua de la red social solidaria.',
+  thank_you_message TEXT DEFAULT 'Gracias de corazón por considerar apoyar a OLA SOCIAL. Cada grano de arena cuenta.',
+  transparency_text TEXT DEFAULT 'Infraestructura en la nube, servidores de alta disponibilidad, auditorías de seguridad, optimización de velocidad y desarrollo de nuevas herramientas para la comunidad.',
+  disclaimer_text TEXT DEFAULT 'Los aportes son voluntarios. Verifica cuidadosamente los datos del método seleccionado antes de realizar cualquier transferencia o pago.',
+  button_position TEXT NOT NULL DEFAULT 'HEADER_AND_MENU' CHECK (button_position IN ('HEADER_AND_MENU', 'HEADER_ONLY', 'MENU_ONLY', 'HIDDEN')),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL
+);
+
+ALTER TABLE public.donation_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.donation_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.donation_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view active donation methods" ON public.donation_methods FOR SELECT USING (status = 'ACTIVE' OR public.is_admin());
+CREATE POLICY "Admins can manage donation methods" ON public.donation_methods FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+CREATE POLICY "Users can insert their own donation report" ON public.donation_reports FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.uid() IS NOT NULL);
+CREATE POLICY "Users can view their own reports" ON public.donation_reports FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
+CREATE POLICY "Admins can update donation reports" ON public.donation_reports FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+CREATE POLICY "Public can view donation settings" ON public.donation_settings FOR SELECT USING (true);
+CREATE POLICY "Admins can update donation settings" ON public.donation_settings FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+
+
 

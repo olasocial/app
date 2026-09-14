@@ -468,5 +468,323 @@ export interface MfaEnrollResult {
   };
 }
 
+// ============================================================
+// CENTRO DE ADMINISTRACIÓN TOTAL: TYPES & INTERFACES (2026)
+// ============================================================
+
+export type AdminSection =
+  | 'dashboard'
+  | 'users'
+  | 'moderation'
+  | 'content'
+  | 'growth'
+  | 'system'
+  | 'supabase'
+  | 'security'
+  | 'audit'
+  | 'donations';
+
+export type RestrictionKey =
+  | 'SEND_HUGS'
+  | 'RECEIVE_INVITATIONS'
+  | 'CREATE_CAMPAIGNS'
+  | 'SEND_INVITATIONS'
+  | 'POST_CONTENT'
+  | 'MESSAGING'
+  | 'COMMENTS';
+
+export interface UserRestriction {
+  id: string;
+  user_id: string;
+  restriction_key: RestrictionKey;
+  is_restricted: boolean;
+  reason?: string;
+  restricted_by?: string;
+  restricted_until?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppSetting {
+  key: string;
+  value: any;
+  category: 'GENERAL' | 'BRANDING' | 'SYSTEM' | 'SECURITY';
+  description?: string;
+  updated_by?: string;
+  updated_at: string;
+}
+
+export interface FeatureFlag {
+  key: string;
+  enabled: boolean;
+  description: string;
+  category: 'CORE' | 'SOCIAL' | 'GROWTH' | 'COMMUNITY' | 'CONTENT' | 'SYSTEM' | 'AUTH';
+  reason?: string;
+  updated_by?: string;
+  updated_at: string;
+}
+
+export type AnnouncementPosition = 'BANNER' | 'CARD' | 'TOP_BAR' | 'MODAL' | 'FEED';
+export type AnnouncementStatus = 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'PAUSED' | 'EXPIRED' | 'ARCHIVED';
+export type AnnouncementAudience = 'ALL' | 'NEW_USERS' | 'ACTIVE_USERS' | 'INACTIVE_USERS' | 'SELECTED';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  link_url?: string;
+  position: AnnouncementPosition;
+  priority: number;
+  status: AnnouncementStatus;
+  audience: AnnouncementAudience;
+  start_at: string;
+  end_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AdminNotificationType =
+  | 'ANNOUNCEMENT'
+  | 'MAINTENANCE'
+  | 'SECURITY'
+  | 'UPDATE'
+  | 'INFO'
+  | 'WARNING'
+  | 'EVENT';
+
+export type AdminNotificationAudience = 'ALL' | 'ACTIVE_USERS' | 'NEW_USERS' | 'SELECTED';
+
+export interface AdminNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: AdminNotificationType;
+  audience: AdminNotificationAudience;
+  target_user_id?: string;
+  is_urgent: boolean;
+  action_url?: string;
+  sent_count: number;
+  read_count: number;
+  status: 'SENT' | 'SCHEDULED' | 'CANCELLED' | 'EXPIRED';
+  expires_at?: string;
+  created_by?: string;
+  created_at: string;
+}
+
+export type ReportStatus = 'OPEN' | 'REVIEWING' | 'ACTION_REQUIRED' | 'RESOLVED' | 'DISMISSED';
+export type ReportContentType = 'USER' | 'TASK' | 'CAMPAIGN' | 'MESSAGE' | 'PROFILE';
+
+export interface ModerationReport {
+  id: string;
+  reporter_id?: string;
+  reported_user_id: string;
+  content_type: ReportContentType;
+  content_id?: string;
+  reason: string;
+  details?: string;
+  evidence_url?: string;
+  status: ReportStatus;
+  assigned_to?: string;
+  resolution_notes?: string;
+  resolved_at?: string;
+  created_at: string;
+  reporter_name?: string;
+  reporter_email?: string;
+  reported_name?: string;
+  reported_email?: string;
+}
+
+export interface AdminNote {
+  id: string;
+  user_id: string;
+  admin_id: string;
+  admin_email?: string;
+  content: string;
+  created_at: string;
+}
+
+export interface AppError {
+  id: string;
+  message: string;
+  stack_trace?: string;
+  component?: string;
+  user_id?: string;
+  severity: 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
+  resolved: boolean;
+  resolved_by?: string;
+  resolved_at?: string;
+  created_at: string;
+}
+
+export interface SystemStatsResult {
+  total_users: number;
+  active_users: number;
+  blocked_users: number;
+  banned_users: number;
+  total_tasks: number;
+  open_disputes: number;
+  open_fraud: number;
+  active_announcements: number;
+  open_reports: number;
+  audit_logs_count: number;
+}
+
+export interface CleanupDryRunResult {
+  dry_run: boolean;
+  real_records: number;
+  test_records: number;
+  simulated_records: number;
+  orphan_records: number;
+  unknown_records: number;
+  notice: string;
+}
+
+export interface MaintenanceConfig {
+  enabled: boolean;
+  emergency: boolean;
+  message: string;
+  start_at?: string;
+  end_at?: string;
+  allow_admin: boolean;
+}
+
+// ============================================================
+// SISTEMA OFICIAL DE APOYO Y DONACIONES (2026)
+// ============================================================
+
+export type DonationMethodType =
+  | 'BINANCE_PAY'
+  | 'PAYPAL'
+  | 'PAGO_MOVIL'
+  | 'BANK_TRANSFER'
+  | 'OTHER';
+
+export type DonationMethodStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+
+export interface BinancePayData {
+  binance_id: string;
+  pay_link?: string;
+  notes?: string;
+}
+
+export interface PayPalData {
+  account_email: string;
+  pay_link?: string;
+  notes?: string;
+}
+
+export interface PagoMovilData {
+  bank_name: string;
+  phone: string;
+  holder_id: string;
+  holder_name: string;
+  recommended_concept?: string;
+}
+
+export interface BankTransferData {
+  bank_name: string;
+  account_type: string;
+  account_number: string;
+  holder_name: string;
+  holder_id: string;
+  recommended_concept?: string;
+}
+
+export interface OtherPaymentData {
+  platform_name?: string;
+  identifier_label?: string;
+  identifier_value?: string;
+  pay_link?: string;
+  custom_fields?: { label: string; value: string }[];
+}
+
+export type DonationPublicData =
+  | BinancePayData
+  | PayPalData
+  | PagoMovilData
+  | BankTransferData
+  | OtherPaymentData
+  | Record<string, any>;
+
+export interface DonationMethod {
+  id: string;
+  name: string;
+  slug: string;
+  type: DonationMethodType;
+  description?: string;
+  instructions?: string;
+  public_data: Record<string, any>;
+  currency: string;
+  icon?: string;
+  logo_url?: string;
+  qr_image_url?: string;
+  status: DonationMethodStatus;
+  display_order: number;
+  warning_note?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+}
+
+export type DonationReportStatus =
+  | 'PENDING'
+  | 'UNDER_REVIEW'
+  | 'CONFIRMED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
+export interface DonationReport {
+  id: string;
+  user_id?: string;
+  method_id: string;
+  method_name: string;
+  method_type: DonationMethodType;
+  amount: number;
+  currency: string;
+  reference: string;
+  donor_name?: string;
+  is_anonymous: boolean;
+  receipt_url?: string;
+  user_comment?: string;
+  status: DonationReportStatus;
+  admin_notes?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+  user_email?: string;
+  reviewer_email?: string;
+}
+
+export interface DonationSettings {
+  id: string;
+  enabled: boolean;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  thank_you_message?: string;
+  transparency_text?: string;
+  disclaimer_text?: string;
+  button_position: 'HEADER_AND_MENU' | 'HEADER_ONLY' | 'MENU_ONLY' | 'HIDDEN';
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export interface DonationStatsSummary {
+  active_methods_count: number;
+  inactive_methods_count: number;
+  total_reports_count: number;
+  pending_reports_count: number;
+  confirmed_reports_count: number;
+  rejected_reports_count: number;
+  total_reported_by_currency: Record<string, number>;
+  total_confirmed_by_currency: Record<string, number>;
+}
+
+
+
 
 

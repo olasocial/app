@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOlaSocial } from '../context/OlaSocialContext';
+import { useI18n } from '../context/I18nContext';
 import {
   supabase,
   isSupabaseConfigured,
@@ -32,6 +33,7 @@ import { MfaFactor, MfaEnrollResult } from '../types';
 export const SecurityCenter: React.FC = () => {
   const { user, updateProfile, logout, enrollMfa, verifyMfaCode, unenrollMfa } = useAuth();
   const { addAuditLog } = useOlaSocial();
+  const { t, formatDate } = useI18n();
 
   // MFA State
   const [factors, setFactors] = useState<MfaFactor[]>([]);
@@ -190,10 +192,10 @@ export const SecurityCenter: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-            Centro de Seguridad y Privacidad
+            {t('security.title')}
           </h2>
           <p className="text-xs text-slate-500">
-            Autenticación en dos pasos (TOTP real), control de sesiones y privacidad de identidad comunitaria.
+            {t('security.subtitle')}
           </p>
         </div>
       </div>
@@ -218,16 +220,16 @@ export const SecurityCenter: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-slate-900 text-base">
-                  Autenticación de Dos Factores (TOTP)
+                  {t('security.two_factor_title')}
                 </h3>
                 {assuranceLevel === 'aal2' && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 uppercase tracking-wider">
-                    AAL2 Verificado
+                    {t('common.verified')} (AAL2)
                   </span>
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Genera claves temporales estándar RFC 6238 en Google Authenticator, Authy, Microsoft Authenticator o 1Password.
+                {t('security.two_factor_desc')}
               </p>
             </div>
           </div>
@@ -243,7 +245,7 @@ export const SecurityCenter: React.FC = () => {
               ) : (
                 <Plus className="w-3.5 h-3.5" />
               )}
-              <span>{factors.length === 0 ? 'Configurar 2FA (TOTP)' : 'Agregar Autenticador de Respaldo'}</span>
+              <span>{factors.length === 0 ? t('security.enable_two_factor') : t('security.setup_two_factor_title')}</span>
             </button>
           </div>
         </div>
@@ -251,22 +253,19 @@ export const SecurityCenter: React.FC = () => {
         {/* Registered Factors List */}
         <div className="space-y-3 pt-2 border-t border-slate-100">
           <div className="text-xs font-bold text-slate-700">
-            Factores Registrados ({factors.length})
+            {t('security.two_factor_title')} ({factors.length})
           </div>
 
           {isLoadingFactors ? (
             <div className="py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
-              <span>Consultando factores en Supabase Auth...</span>
+              <span>{t('common.loading')}</span>
             </div>
           ) : factors.length === 0 ? (
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <div className="font-bold">2FA Desactivado</div>
-                <div className="text-[11px] text-amber-800 mt-0.5">
-                  Tu cuenta actualmente está protegida únicamente por contraseña o proveedor OAuth. Te recomendamos activar TOTP para blindar tus colaboraciones y reputación.
-                </div>
+                <div className="font-bold">{t('security.two_factor_desc')}</div>
               </div>
             </div>
           ) : (
@@ -284,11 +283,11 @@ export const SecurityCenter: React.FC = () => {
                       <div className="font-bold text-slate-800 flex items-center gap-2">
                         <span>{factor.friendly_name || 'Autenticador TOTP'}</span>
                         <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
-                          {factor.status === 'verified' ? 'Verificado' : 'Pendiente'}
+                          {factor.status === 'verified' ? t('common.verified') : t('invitations.status_pending')}
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
-                        Registrado el {new Date(factor.created_at).toLocaleDateString()} • Algoritmo SHA-1 (30s)
+                        {formatDate(factor.created_at)}
                       </div>
                     </div>
                   </div>
@@ -297,7 +296,7 @@ export const SecurityCenter: React.FC = () => {
                     onClick={() => handleRemoveFactor(factor.id, factor.friendly_name || 'Autenticador')}
                     className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2.5 py-1 rounded-lg hover:bg-rose-50 transition-colors"
                   >
-                    Desvincular
+                    {t('security.disable_two_factor')}
                   </button>
                 </div>
               ))}
@@ -311,19 +310,18 @@ export const SecurityCenter: React.FC = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
             <Laptop className="w-5 h-5 text-slate-600" />
-            <span>Sesiones y Dispositivos Conectados</span>
+            <span>{t('security.close_sessions_title')}</span>
           </h3>
           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-            Sesión Actual Activa
+            {t('invitations.status_active')}
           </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
           <div>
-            <div className="font-bold text-slate-900">Navegador Web Actual</div>
+            <div className="font-bold text-slate-900">{t('security.close_sessions_desc')}</div>
             <div className="text-slate-500 text-[11px] mt-0.5">
-              Conectado como <strong className="text-slate-700">{user?.email}</strong> • Nivel de Seguridad:{' '}
-              {assuranceLevel === 'aal2' ? 'AAL2 (TOTP verificado)' : 'AAL1'}
+              <strong className="text-slate-700">{user?.email}</strong>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -337,14 +335,14 @@ export const SecurityCenter: React.FC = () => {
               ) : (
                 <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
               )}
-              <span>Cerrar otras sesiones</span>
+              <span>{t('security.close_sessions_button')}</span>
             </button>
             <button
               onClick={logout}
               className="text-xs text-rose-600 font-bold hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition-colors flex items-center gap-1"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Cerrar sesión</span>
+              <span>{t('nav.logout')}</span>
             </button>
           </div>
         </div>
@@ -355,9 +353,9 @@ export const SecurityCenter: React.FC = () => {
         <div className="flex items-start gap-3">
           <AlertOctagon className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base">Eliminación de Cuenta</h3>
+            <h3 className="font-extrabold text-slate-900 text-base">{t('security.delete_account_title')}</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Conforme al derecho de supresión de datos, puedes solicitar la eliminación definitiva de tu cuenta. Se anonimizarán tus datos públicos garantizando la integridad de las colaboraciones previas.
+              {t('security.delete_account_desc')}
             </p>
           </div>
         </div>
@@ -368,7 +366,7 @@ export const SecurityCenter: React.FC = () => {
             className="px-4 py-2 rounded-xl border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-50 transition-colors inline-flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            <span>Solicitar eliminación de mi cuenta</span>
+            <span>{t('security.delete_account_button')}</span>
           </button>
         </div>
       </div>
@@ -378,10 +376,10 @@ export const SecurityCenter: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 text-center">
             <h3 className="font-extrabold text-slate-900 text-lg mb-1">
-              Vincular Autenticador (TOTP)
+              {t('security.setup_two_factor_title')}
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Escanea el código QR oficial con Google Authenticator, Authy o Microsoft Authenticator.
+              {t('security.scan_qr_instruction')}
             </p>
 
             {/* REAL SVG QR CODE CONTAINER */}
@@ -401,14 +399,14 @@ export const SecurityCenter: React.FC = () => {
             {/* MANUAL SECRET KEY */}
             <div className="mb-4 text-left bg-slate-100/80 p-3 rounded-2xl border border-slate-200">
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
-                <span>Clave Secreta Manual</span>
+                <span>{t('security.manual_secret_instruction')}</span>
                 <button
                   type="button"
                   onClick={handleCopySecret}
                   className="text-teal-600 hover:text-teal-800 font-semibold flex items-center gap-1"
                 >
                   {copiedSecret ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedSecret ? 'Copiado' : 'Copiar'}</span>
+                  <span>{copiedSecret ? t('invitations.copied_alert') : t('invitations.copy_code_button')}</span>
                 </button>
               </div>
               <div className="font-mono text-xs font-bold text-slate-800 tracking-wider break-all select-all">
@@ -427,7 +425,7 @@ export const SecurityCenter: React.FC = () => {
             <form onSubmit={handleConfirmVerify} className="space-y-3 text-left">
               <div>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  Código de 6 dígitos que muestra tu app:
+                  {t('security.enter_code_instruction')}
                 </label>
                 <input
                   type="text"
@@ -449,7 +447,7 @@ export const SecurityCenter: React.FC = () => {
                   }}
                   className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -463,10 +461,10 @@ export const SecurityCenter: React.FC = () => {
                   {isEnrolling ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Validando con Supabase...</span>
+                      <span>{t('common.loading')}</span>
                     </>
                   ) : (
-                    <span>Verificar y Activar</span>
+                    <span>{t('security.verify_and_enable')}</span>
                   )}
                 </button>
               </div>
@@ -480,29 +478,29 @@ export const SecurityCenter: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
             <h3 className="font-extrabold text-rose-700 text-base sm:text-lg mb-2">
-              Confirmar Eliminación de Cuenta
+              {t('security.delete_account_title')}
             </h3>
             <p className="text-xs text-slate-600 mb-3">
-              Esta acción es irreversible. Se revocarán todas tus sesiones activas y se anonimizará tu perfil público.
+              {t('security.delete_account_desc')}
             </p>
 
             <form onSubmit={handleDeleteAccount} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Motivo de tu salida (opcional)
+                  {t('common.details')}
                 </label>
                 <input
                   type="text"
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
-                  placeholder="Ayúdanos a mejorar..."
+                  placeholder="..."
                   className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Escribe exactamente <span className="text-rose-600 font-mono">"eliminar mi cuenta"</span> para confirmar:
+                  {t('security.delete_account_confirm_prompt')}
                 </label>
                 <input
                   type="text"
@@ -519,14 +517,14 @@ export const SecurityCenter: React.FC = () => {
                   onClick={() => setDeleteModalOpen(false)}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 text-center"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={deleteConfirmText.toLowerCase() !== 'eliminar mi cuenta'}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 disabled:opacity-40 text-white text-xs font-bold shadow-md text-center cursor-pointer"
                 >
-                  Eliminar Definitivamente
+                  {t('security.delete_account_confirm_button')}
                 </button>
               </div>
             </form>

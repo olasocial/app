@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, Share2, Award, Swords, Trophy, Shield, Sparkles, Users } from 'lucide-react';
+import { Home, Share2, Award, Swords, Trophy, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 interface MobileBottomNavProps {
   currentTab: string;
@@ -12,11 +13,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onSelectTab
 }) => {
   const { user, isAdmin } = useAuth();
+  const { t } = useI18n();
 
   return (
     <nav
       className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-1.5 px-2 safe-area-pb shadow-lg"
-      aria-label="Navegación Móvil"
+      aria-label={t('nav.mobile_nav_label', undefined, 'Navegación Móvil')}
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         <button
@@ -28,7 +30,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Home className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Lobby</span>
+          <span className="text-[10px] leading-tight">{t('nav.lobby')}</span>
         </button>
 
         <button
@@ -40,7 +42,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Share2 className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Redes</span>
+          <span className="text-[10px] leading-tight">{t('nav.profiles')}</span>
         </button>
 
         <button
@@ -52,7 +54,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Award className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Progreso</span>
+          <span className="text-[10px] leading-tight">{t('nav.progress')}</span>
           {user && (
             <span className="absolute top-0.5 right-1.5 w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
               {user.level_number || 1}
@@ -69,7 +71,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Swords className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Batallas</span>
+          <span className="text-[10px] leading-tight">{t('nav.battles')}</span>
         </button>
 
         <button
@@ -81,7 +83,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Trophy className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Ranking</span>
+          <span className="text-[10px] leading-tight">{t('nav.ranking')}</span>
         </button>
 
         <button
@@ -93,7 +95,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <Users className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] leading-tight">Invitar</span>
+          <span className="text-[10px] leading-tight">{t('nav.invitations')}</span>
         </button>
 
         {isAdmin && (
@@ -106,10 +108,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             }`}
           >
             <Sparkles className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] leading-tight">Admin</span>
+            <span className="text-[10px] leading-tight">{t('nav.admin')}</span>
           </button>
         )}
       </div>
     </nav>
   );
 };
+

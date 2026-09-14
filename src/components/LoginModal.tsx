@@ -9,6 +9,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { OlaLogo } from './OlaLogo';
 import { TurnstileWidget } from './TurnstileWidget';
 
@@ -26,6 +27,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     authError,
     clearAuthError
   } = useAuth();
+  const { t } = useI18n();
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
@@ -113,10 +115,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
         <div className="space-y-1 mb-5">
           <h3 className="text-xl font-extrabold text-slate-900">
-            Acceder a OLA SOCIAL
+            {t('auth.login_title')}
           </h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            "Crece junto a una comunidad real." Identidad única respaldada por Google OAuth sin cuentas duplicadas ni bots.
+            {t('auth.login_subtitle')}
           </p>
         </div>
 
@@ -124,7 +126,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         {inviteCode && (
           <div className="mb-4 p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-semibold flex items-center justify-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-            <span>Invitación activa: <strong className="font-mono text-teal-700">{inviteCode}</strong></span>
+            <span>{t('auth.invite_active')} <strong className="font-mono text-teal-700">{inviteCode}</strong></span>
           </div>
         )}
 
@@ -137,7 +139,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             }}
             onVerifyExpired={() => {
               setTurnstileToken(null);
-              setTurnstileError('La verificación humana expiró. Completa nuevamente el desafío.');
+              setTurnstileError(t('auth.human_verification_needed'));
             }}
             onVerifyError={(err) => {
               setTurnstileToken(null);
@@ -160,16 +162,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs">
               <div className="font-bold flex items-center gap-1.5 mb-1">
                 <KeyRound className="w-4 h-4 text-amber-700" />
-                <span>Verificación en Dos Pasos (2FA TOTP)</span>
+                <span>{t('auth.mfa_required_title')}</span>
               </div>
               <p className="text-[11px] text-amber-800">
-                Abre tu aplicación autenticadora (Google Authenticator, Authy) e introduce el código de 6 dígitos.
+                {t('security.scan_qr_instruction')}
               </p>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1 text-center">
-                Código de 6 dígitos
+                {t('auth.mfa_code_label')}
               </label>
               <input
                 type="text"
@@ -194,10 +196,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Verificando código TOTP...</span>
+                  <span>{t('auth.mfa_verifying')}</span>
                 </>
               ) : (
-                <span>Validar y Entrar</span>
+                <span>{t('auth.mfa_verify_button')}</span>
               )}
             </button>
           </form>
@@ -218,7 +220,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               {isSubmitting || isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-sky-600" />
-                  <span>Conectando con Google...</span>
+                  <span>{t('auth.google_connecting')}</span>
                 </>
               ) : (
                 <>
@@ -240,19 +242,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span>Continuar con Google</span>
+                  <span>{t('auth.continue_google')}</span>
                 </>
               )}
             </button>
 
             {!isVerified ? (
               <p className="text-[11px] text-amber-700/90 font-medium text-center">
-                El botón se activará al completar la verificación humana de arriba.
+                {t('auth.human_verification_needed')}
               </p>
             ) : (
               <p className="text-[11px] text-emerald-700 font-semibold text-center flex items-center justify-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Verificación humana completada. Listo para continuar.</span>
+                <span>{t('auth.human_verification_ready')}</span>
               </p>
             )}
           </div>
@@ -261,7 +263,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         {/* Security and Single-Identity Notice */}
         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-          <span>Autenticación oficial Supabase Auth • Google OAuth • Una persona = Una cuenta</span>
+          <span>{t('auth.security_badge')}</span>
         </div>
       </div>
     </div>

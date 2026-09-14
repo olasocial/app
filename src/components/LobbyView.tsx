@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOlaSocial } from '../context/OlaSocialContext';
+import { useI18n } from '../context/I18nContext';
 import { Task, TaskStatus, SocialPlatformKey } from '../types';
 import { PLATFORM_REGISTRY } from '../services/platformAdapters';
 import { OlaLogo } from './OlaLogo';
@@ -43,6 +44,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
   isScrolled
 }) => {
   const { user } = useAuth();
+  const { t, formatNumber } = useI18n();
   const {
     tasks,
     campaigns,
@@ -207,13 +209,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold mb-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Interacciones 100% Humanas y Voluntarias</span>
+              <span>{t('lobby.hero_badge')}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              ¡Hola, {user?.display_name}!
+              {t('lobby.hero_greeting', { name: user?.display_name || 'Creador' })}
             </h2>
             <p className="mt-1 text-sky-100 text-sm sm:text-base max-w-xl">
-              Bienvenido a tu espacio de comunidad. Descubre talentos independientes, intercambia apoyo genuino y cuida tu reputación sin bots ni trampas.
+              {t('lobby.hero_desc')}
             </p>
           </div>
 
@@ -223,14 +225,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-sky-700 font-bold text-sm shadow-md hover:bg-sky-50 transition-all hover:scale-[1.02] active:scale-98"
             >
               <PlusCircle className="w-4 h-4 text-emerald-600" />
-              <span>Crear Campaña</span>
+              <span>{t('lobby.create_campaign_button')}</span>
             </button>
             <button
               onClick={onOpenSocialProfiles}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-700/60 hover:bg-sky-700 text-white font-semibold text-sm border border-white/30 backdrop-blur-xs transition-all"
             >
               <ShieldCheck className="w-4 h-4 text-teal-300" />
-              <span>Mis Redes Protegidas</span>
+              <span>{t('lobby.protected_networks_button')}</span>
             </button>
           </div>
         </div>
@@ -240,24 +242,24 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
           <div className="flex items-center gap-3 bg-white/10 rounded-2xl p-3 backdrop-blur-2xs">
             <Users className="w-5 h-5 text-emerald-300" />
             <div>
-              <div className="font-extrabold text-white text-base sm:text-lg">{onlineUsersCount}</div>
-              <div className="text-sky-100 text-xs">Usuarios online ahora</div>
+              <div className="font-extrabold text-white text-base sm:text-lg">{formatNumber(onlineUsersCount)}</div>
+              <div className="text-sky-100 text-xs">{t('lobby.stat_online_users')}</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 bg-white/10 rounded-2xl p-3 backdrop-blur-2xs">
             <TrendingUp className="w-5 h-5 text-amber-300" />
             <div>
-              <div className="font-extrabold text-white text-base sm:text-lg">+{newUsersTodayCount}</div>
-              <div className="text-sky-100 text-xs">Nuevos usuarios hoy</div>
+              <div className="font-extrabold text-white text-base sm:text-lg">+{formatNumber(newUsersTodayCount)}</div>
+              <div className="text-sky-100 text-xs">{t('lobby.stat_new_today')}</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 bg-white/10 rounded-2xl p-3 backdrop-blur-2xs">
             <Eye className="w-5 h-5 text-cyan-300" />
             <div>
-              <div className="font-extrabold text-white text-base sm:text-lg">{peopleDiscoveringCount}</div>
-              <div className="text-sky-100 text-xs">Personas descubriéndote</div>
+              <div className="font-extrabold text-white text-base sm:text-lg">{formatNumber(peopleDiscoveringCount)}</div>
+              <div className="text-sky-100 text-xs">{t('lobby.stat_discovering')}</div>
             </div>
           </div>
         </div>
@@ -268,64 +270,67 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
         {/* Card 1: Abrazos Realizados */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-sky-600 mb-1.5 sm:mb-2">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Realizados</span>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{t('lobby.metric_hugs_done')}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
               <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-600" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_done ?? 0}</div>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Abrazos dados</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{formatNumber(user?.hugs_done ?? 0)}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">{t('lobby.metric_hugs_done_sub')}</p>
         </div>
 
         {/* Card 2: Abrazos Recibidos */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-teal-600 mb-1.5 sm:mb-2">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Recibidos</span>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{t('lobby.metric_hugs_received')}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_received ?? 0}</div>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Apoyos hacia ti</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{formatNumber(user?.hugs_received ?? 0)}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">{t('lobby.metric_hugs_received_sub')}</p>
         </div>
 
         {/* Card 3: Abrazos Validados */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-emerald-600 mb-1.5 sm:mb-2">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Validados</span>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{t('lobby.metric_hugs_verified')}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
               <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.hugs_verified ?? 0}</div>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Confirmados</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{formatNumber(user?.hugs_verified ?? 0)}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">{t('lobby.metric_hugs_verified_sub')}</p>
         </div>
 
         {/* Card 4: Estrellas */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-amber-500 mb-1.5 sm:mb-2">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Estrellas</span>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{t('lobby.metric_stars')}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
               <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-400" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{user?.stars_count ?? 0}</div>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">Prom: {user?.rating_avg || '5.0'}★</p>
+          <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900">{formatNumber(user?.stars_count ?? 0)}</div>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">{t('lobby.metric_stars_sub', { avg: user?.rating_avg || '5.0' })}</p>
         </div>
 
         {/* Card 5: Nivel */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-xs sm:shadow-sm hover:shadow-md transition-shadow col-span-2 sm:col-span-1 lg:col-span-1">
           <div className="flex items-center justify-between text-rose-500 mb-1.5 sm:mb-2">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Nivel</span>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{t('lobby.metric_level')}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
               <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />
             </div>
           </div>
           <div className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 truncate">
-            Nivel {user?.level_number || 1}
+            {t('nav.level_num', { num: user?.level_number || 1 })}
           </div>
           <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">
-            {user?.experience_points || 0} XP • Rep: {user?.reputation_score !== undefined ? user.reputation_score.toFixed(1) : '100.0'}
+            {t('lobby.metric_level_sub', {
+              xp: formatNumber(user?.experience_points || 0),
+              rep: user?.reputation_score !== undefined ? user.reputation_score.toFixed(1) : '100.0'
+            })}
           </p>
         </div>
       </div>
@@ -344,7 +349,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             onClick={() => setActionFeedback(null)}
             className="text-xs font-bold underline ml-4"
           >
-            Cerrar
+            {t('common.close')}
           </button>
         </div>
       )}
@@ -355,11 +360,11 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-amber-600" />
             <h3 className="text-lg font-bold text-amber-900">
-              Abrazos recibidos pendientes de tu validación ({pendingReceivedTasks.length})
+              {t('lobby.pending_validation_title', { count: pendingReceivedTasks.length })}
             </h3>
           </div>
           <p className="text-xs text-amber-800 mb-4">
-            Otros creadores o usuarios han interactuado de forma auténtica contigo. Revisa y califica la experiencia para confirmar su reputación.
+            {t('lobby.pending_validation_desc')}
           </p>
 
           <div className="space-y-3">
@@ -380,7 +385,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   <p className="text-xs text-slate-600 mt-1 font-medium">{pt.title}</p>
                   {pt.evidence_note && (
                     <div className="mt-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700">
-                      <span className="font-semibold text-slate-900">Mensaje/Evidencia declarada: </span>
+                      <span className="font-semibold text-slate-900">{t('lobby.validate_evidence_label')}{' '}</span>
                       "{pt.evidence_note}"
                     </div>
                   )}
@@ -390,7 +395,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   onClick={() => setSelectedTaskToValidate(pt)}
                   className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors whitespace-nowrap"
                 >
-                  Validar este Abrazo
+                  {t('lobby.review_button')}
                 </button>
               </div>
             ))}
@@ -408,14 +413,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="font-extrabold text-sm sm:text-base text-white">
-                  Invita Creadores Genuinos y Gana Reputación
+                  {t('lobby.invite_banner_title')}
                 </h4>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-800/80 text-teal-200 border border-teal-600/40">
-                  +25 pts por validado
+                  {t('lobby.invite_banner_reward')}
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Tu código de creador es <strong className="text-amber-300 font-mono">{user.invite_code || 'OLA-COMUNIDAD'}</strong>. Comparte tu enlace y expande la red.
+                {t('lobby.invite_banner_desc', { code: user.invite_code || 'OLA-COMUNIDAD' })}
               </p>
             </div>
           </div>
@@ -424,7 +429,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             onClick={onOpenInvitations}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold text-xs shadow-xs transition-all whitespace-nowrap cursor-pointer"
           >
-            Gestionar Invitaciones
+            {t('lobby.invite_banner_button')}
           </button>
         </div>
       )}
@@ -434,14 +439,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
         <div className="flex items-center gap-2 mb-2">
           <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold flex items-center gap-1.5">
             <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-            <span>Filosofía de Crecimiento Comunitario</span>
+            <span>{t('lobby.growth_badge')}</span>
           </span>
         </div>
         <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
-          "Crece junto a una comunidad real"
+          {t('lobby.growth_title')}
         </h3>
         <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-          ABRAZAR+ elimina los algoritmos engañosos y las granjas de bots. Aquí el crecimiento se fundamenta en 3 principios de apoyo mutuo y humano:
+          {t('lobby.growth_desc')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-5">
@@ -449,9 +454,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <div className="w-8 h-8 rounded-xl bg-sky-600 text-white font-black text-sm flex items-center justify-center mb-3">
               1
             </div>
-            <h4 className="text-xs font-bold text-sky-950 uppercase tracking-wide">Descubrimiento Genuino</h4>
+            <h4 className="text-xs font-bold text-sky-950 uppercase tracking-wide">{t('lobby.growth_p1_title')}</h4>
             <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-              Conoce canales, videos y perfiles de creadores independientes en TikTok, YouTube, Instagram, Twitch, Kick y más.
+              {t('lobby.growth_p1_desc')}
             </p>
           </div>
 
@@ -459,9 +464,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <div className="w-8 h-8 rounded-xl bg-teal-600 text-white font-black text-sm flex items-center justify-center mb-3">
               2
             </div>
-            <h4 className="text-xs font-bold text-teal-950 uppercase tracking-wide">Abrazos Voluntarios</h4>
+            <h4 className="text-xs font-bold text-teal-950 uppercase tracking-wide">{t('lobby.growth_p2_title')}</h4>
             <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-              Cada interacción es libre y auténtica. Apoya cuando un contenido conecte contigo, sin promesas mecánicas ni penalizaciones.
+              {t('lobby.growth_p2_desc')}
             </p>
           </div>
 
@@ -469,9 +474,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             <div className="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-sm flex items-center justify-center mb-3">
               3
             </div>
-            <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wide">Reputación y Nivel</h4>
+            <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wide">{t('lobby.growth_p3_title')}</h4>
             <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-              Acumula XP verificado, sube de nivel y desbloquea insignias comunitarias que impulsan tu propia visibilidad orgánica.
+              {t('lobby.growth_p3_desc')}
             </p>
           </div>
         </div>
@@ -491,7 +496,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               }`}
             >
               <Heart className="w-3.5 h-3.5 text-rose-500" />
-              <span>Oportunidades de Abrazo ({availableTasks.length})</span>
+              <span>{t('lobby.tabs_opportunities_count', { count: availableTasks.length })}</span>
             </button>
             <button
               onClick={() => setActiveLobbyTab('creators')}
@@ -502,7 +507,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               }`}
             >
               <Compass className="w-3.5 h-3.5 text-sky-600" />
-              <span>Directorio de Creadores ({communityCreators.length})</span>
+              <span>{t('lobby.tabs_creators_count', { count: communityCreators.length })}</span>
             </button>
           </div>
 
@@ -510,14 +515,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
           {activeLobbyTab === 'tasks' && (
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-medium">Ordenar por:</span>
+              <span className="font-medium">{t('lobby.sort_label')}</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'recent' | 'popular')}
                 className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-sky-500"
               >
-                <option value="recent">Más recientes</option>
-                <option value="popular">Más abrazados</option>
+                <option value="recent">{t('lobby.sort_recent')}</option>
+                <option value="popular">{t('lobby.sort_popular')}</option>
               </select>
             </div>
           )}
@@ -531,7 +536,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por creador, @usuario o tema de contenido..."
+              placeholder={t('lobby.search_input_placeholder')}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
             />
             {searchTerm && (
@@ -554,7 +559,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              Todas
+              {t('lobby.platform_all')}
             </button>
             {Object.keys(PLATFORM_REGISTRY).map((k) => (
               <button
@@ -580,13 +585,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                 <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <h4 className="text-base font-bold text-slate-700">
                   {tasks.length === 0
-                    ? 'No hay tareas de apoyo activas en este momento'
-                    : 'No hay tareas que coincidan con la búsqueda'}
+                    ? t('lobby.no_opportunities_found')
+                    : t('common.no_results')}
                 </h4>
                 <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
                   {tasks.length === 0
-                    ? 'Sé el primero en impulsar tu contenido creando una campaña comunitaria con apoyo real.'
-                    : 'Intenta cambiar el término de búsqueda o selecciona otra plataforma.'}
+                    ? t('lobby.no_opportunities_cta')
+                    : t('lobby.creators_empty_desc')}
                 </p>
                 {tasks.length === 0 && (
                   <button
@@ -594,7 +599,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                     className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-sky-600 text-white font-bold text-xs shadow-md hover:bg-sky-700 transition-all hover:scale-[1.02] active:scale-98"
                   >
                     <PlusCircle className="w-4 h-4" />
-                    <span>Crear Campaña</span>
+                    <span>{t('lobby.create_campaign_button')}</span>
                   </button>
                 )}
               </div>
@@ -649,9 +654,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                         {/* Campaign Voluntary Progress Bar */}
                         <div className="mt-3.5 pt-2 border-t border-slate-100">
                           <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
-                            <span>Abrazos comunitarios</span>
+                            <span>{t('lobby.card_community_progress')}</span>
                             <span className="text-sky-700 font-bold">
-                              {currentHugs} / {maxHugs} ({progressPct}%)
+                              {formatNumber(currentHugs)} / {formatNumber(maxHugs)} ({progressPct}%)
                             </span>
                           </div>
                           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -677,7 +682,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors p-1"
                         >
-                          <span>Ver perfil</span>
+                          <span>{t('lobby.card_visit_profile')}</span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
 
@@ -686,14 +691,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                             onClick={() => setSelectedTaskToDeclare(task)}
                             className="px-3.5 py-2 min-h-[38px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors touch-manipulation"
                           >
-                            Declarar realizado
+                            {t('lobby.card_declare_done')}
                           </button>
                         ) : (
                           <button
                             onClick={() => handleStart(task.id, task.target_profile_url)}
                             className="px-3.5 py-2 min-h-[38px] rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition-colors touch-manipulation"
                           >
-                            Dar Abrazo
+                            {t('lobby.card_give_hug')}
                           </button>
                         )}
                       </div>
@@ -711,9 +716,9 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             {communityCreators.length === 0 ? (
               <div className="bg-white rounded-3xl p-12 text-center border border-slate-100">
                 <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h4 className="text-base font-bold text-slate-700">No se encontraron creadores</h4>
+                <h4 className="text-base font-bold text-slate-700">{t('lobby.creators_empty_title')}</h4>
                 <p className="text-xs text-slate-500 mt-1">
-                  Intenta cambiar el filtro de plataforma o el término de búsqueda.
+                  {t('lobby.creators_empty_desc')}
                 </p>
               </div>
             ) : (
@@ -749,12 +754,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                             {platformInfo?.name || creator.platform}
                           </span>
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            {creator.campaignCount} campaña{creator.campaignCount > 1 ? 's' : ''} activa
+                            {creator.campaignCount === 1
+                              ? t('lobby.creator_active_campaigns_one', { count: creator.campaignCount })
+                              : t('lobby.creator_active_campaigns_other', { count: creator.campaignCount })}
                           </span>
                         </div>
 
                         <p className="text-xs text-slate-600 leading-relaxed">
-                          Creador verificado de la comunidad ABRAZAR+. Comparte contenido original y apoya activamente a otros creadores.
+                          {t('lobby.creator_verified_desc')}
                         </p>
                       </div>
 
@@ -765,7 +772,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors"
                         >
-                          <span>Visitar Canal</span>
+                          <span>{t('lobby.creator_visit_channel')}</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                         <button
@@ -775,7 +782,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                           }}
                           className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
                         >
-                          Ver Campañas
+                          {t('lobby.creator_view_campaigns')}
                         </button>
                       </div>
                     </div>
@@ -792,7 +799,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">Declarar Acción Realizada</h3>
+              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">{t('lobby.declare_modal_title')}</h3>
               <button
                 onClick={() => setSelectedTaskToDeclare(null)}
                 className="text-slate-400 hover:text-slate-600 p-1"
@@ -803,27 +810,27 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
             <div className="bg-sky-50 rounded-2xl p-3 mb-4 text-xs text-sky-800 break-all">
               <p className="font-bold">{selectedTaskToDeclare.title}</p>
-              <p className="text-sky-700 mt-0.5 text-[11px]">Destino: {selectedTaskToDeclare.target_profile_url}</p>
+              <p className="text-sky-700 mt-0.5 text-[11px]">{t('lobby.card_open_profile')}: {selectedTaskToDeclare.target_profile_url}</p>
             </div>
 
             <form onSubmit={handleDeclareSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nota o Comentario de tu interacción auténtica *
+                  {t('lobby.declare_evidence_required')}
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={evidenceNote}
                   onChange={(e) => setEvidenceNote(e.target.value)}
-                  placeholder="Escribe brevemente qué te pareció el contenido o video..."
+                  placeholder={t('lobby.declare_evidence_note_prompt')}
                   className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-3 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  URL de evidencia pública o captura opcional
+                  {t('lobby.declare_evidence_url_prompt')}
                 </label>
                 <input
                   type="url"
@@ -833,7 +840,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   className="w-full text-base sm:text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
                 <p className="text-[10px] text-slate-400 mt-1">
-                  Las capturas se usan únicamente para validar el cumplimiento humano de la tarea.
+                  {t('lobby.declare_evidence_helper')}
                 </p>
               </div>
 
@@ -843,13 +850,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                   onClick={() => setSelectedTaskToDeclare(null)}
                   className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md"
                 >
-                  Confirmar Declaración
+                  {t('lobby.declare_submit')}
                 </button>
               </div>
             </form>
@@ -862,7 +869,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-extrabold text-slate-900 text-lg">Validar Abrazo Recibido</h3>
+              <h3 className="font-extrabold text-slate-900 text-lg">{t('lobby.validate_received_title')}</h3>
               <button
                 onClick={() => setSelectedTaskToValidate(null)}
                 className="text-slate-400 hover:text-slate-600"
@@ -872,13 +879,12 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             </div>
 
             <p className="text-xs text-slate-600 mb-4">
-              ¿Recibiste el apoyo declarado por{' '}
-              <strong className="text-slate-900">{selectedTaskToValidate.assigned_user_name}</strong>?
+              {t('lobby.validate_received_question', { name: selectedTaskToValidate.assigned_user_name || 'Usuario' })}
             </p>
 
             {selectedTaskToValidate.evidence_note && (
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs text-slate-700 mb-4">
-                <span className="font-bold text-slate-900 block mb-1">Evidencia declarada:</span>
+                <span className="font-bold text-slate-900 block mb-1">{t('lobby.validate_evidence_label')}</span>
                 "{selectedTaskToValidate.evidence_note}"
               </div>
             )}
@@ -886,7 +892,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             {/* Stars Rating Selector */}
             <div className="mb-4">
               <label className="block text-xs font-bold text-slate-700 mb-2">
-                Calificación de calidad humana:
+                {t('lobby.validate_quality_label')}
               </label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -914,13 +920,13 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
             {/* Optional Feedback */}
             <div className="mb-5">
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                ¿Qué te pareció la interacción? (Opcional)
+                {t('lobby.validate_opinion_label')}
               </label>
               <input
                 type="text"
                 value={validationComment}
                 onChange={(e) => setValidationComment(e.target.value)}
-                placeholder="Un mensaje de agradecimiento o retroalimentación..."
+                placeholder={t('lobby.validate_opinion_placeholder')}
                 className="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
               />
             </div>
@@ -932,7 +938,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                 onClick={() => handleValidateSubmit(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-rose-200 text-rose-700 font-bold text-xs hover:bg-rose-50 transition-colors"
               >
-                No recibí este apoyo
+                {t('lobby.validate_reject_button')}
               </button>
 
               <button
@@ -940,7 +946,7 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
                 onClick={() => handleValidateSubmit(true)}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors"
               >
-                Sí, recibí el apoyo
+                {t('lobby.validate_confirm_button')}
               </button>
             </div>
           </div>

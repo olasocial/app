@@ -26,10 +26,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOlaSocial } from '../context/OlaSocialContext';
+import { useI18n } from '../context/I18nContext';
 import { LevelRequirement, DisputeStatus } from '../types';
 
 export const LevelsAndProgressView: React.FC = () => {
   const { user, isAdmin } = useAuth();
+  const { t, formatNumber } = useI18n();
   const {
     levelRequirements,
     experienceLedger,
@@ -129,16 +131,15 @@ export const LevelsAndProgressView: React.FC = () => {
               </span>
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${repBadge.color}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Reputación: {currentRep.toFixed(1)} / 1000 ({repBadge.label})
+                {t('levels.reputation_score')}: {formatNumber(currentRep)} / 1000 ({repBadge.label})
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Progreso & Niveles Certificados
+              {t('levels.title')}
             </h1>
             <p className="text-sm text-sky-200/90 max-w-2xl leading-relaxed">
-              En OLA SOCIAL tu nivel se gana mediante ayudas reales verificadas por otros usuarios.
-              Sin bots, sin atajos y con total transparencia en Supabase.
+              {t('levels.subtitle')}
             </p>
           </div>
 
@@ -146,19 +147,19 @@ export const LevelsAndProgressView: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center">
             <div className="p-2">
               <div className="text-xl sm:text-2xl font-black text-amber-400">{currentXP}</div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Puntos XP</div>
+              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">{t('levels.experience_points')}</div>
             </div>
             <div className="p-2">
               <div className="text-xl sm:text-2xl font-black text-sky-400">{verifiedCount}</div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Abrazos Cert.</div>
+              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">{t('levels.min_hugs')}</div>
             </div>
             <div className="p-2">
               <div className="text-xl sm:text-2xl font-black text-emerald-400">{uniqueUsersCount}</div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Amigos Únicos</div>
+              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">{t('lobby.badge_community')}</div>
             </div>
             <div className="p-2">
               <div className="text-xl sm:text-2xl font-black text-purple-400">{uniquePlatformsCount}</div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Plataformas</div>
+              <div className="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">{t('profiles.channel_name_label')}</div>
             </div>
           </div>
         </div>
@@ -168,7 +169,7 @@ export const LevelsAndProgressView: React.FC = () => {
           <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold">
               <span className="text-sky-200">
-                Progreso hacia <strong className="text-white">Nivel {nextLevel.level_number} ({nextLevel.level_name})</strong>
+                {t('levels.next_level')}: <strong className="text-white">{t('nav.level_num', { num: nextLevel.level_number })} ({nextLevel.level_name})</strong>
               </span>
               <span className="text-amber-300 font-bold">
                 {currentXP} / {nextLevel.min_xp} XP ({xpPercent}%)
@@ -183,9 +184,7 @@ export const LevelsAndProgressView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-300">
               <span>Faltan: <strong>{Math.max(0, nextLevel.min_xp - currentXP)} XP</strong></span>
               <span>•</span>
-              <span>Abrazos req: <strong>{Math.max(0, nextLevel.min_verified_supports - verifiedCount)} más</strong></span>
-              <span>•</span>
-              <span>Usuarios únicos req: <strong>{Math.max(0, nextLevel.min_unique_users - uniqueUsersCount)} más</strong></span>
+              <span>{t('levels.min_hugs')}: <strong>{Math.max(0, nextLevel.min_verified_supports - verifiedCount)} más</strong></span>
             </div>
           </div>
         )}
@@ -201,7 +200,7 @@ export const LevelsAndProgressView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          Jerarquía de 10 Niveles
+          {t('levels.title')}
         </button>
 
         <button
@@ -212,7 +211,7 @@ export const LevelsAndProgressView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          Insignias de Mérito ({badges.filter((b) => b.awarded_at).length})
+          {t('levels.benefits')} ({badges.filter((b) => b.awarded_at).length})
         </button>
 
         <button
@@ -223,7 +222,7 @@ export const LevelsAndProgressView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          Abrazos Certificados
+          {t('levels.min_hugs')}
         </button>
 
         <button
@@ -234,7 +233,7 @@ export const LevelsAndProgressView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          Mi Historial XP & Reputación
+          {t('levels.experience_points')} & {t('levels.reputation_score')}
         </button>
 
         <button

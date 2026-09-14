@@ -19,11 +19,13 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { fetchUserInvitations } from '../services/supabaseClient';
 import { Invitation } from '../types';
 
 export const InvitationsView: React.FC = () => {
   const { user } = useAuth();
+  const { t, formatDate } = useI18n();
 
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -111,10 +113,10 @@ export const InvitationsView: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-              Sistema de Invitaciones Reales
+              {t('invitations.title')}
             </h2>
             <p className="text-xs text-slate-500">
-              Invita a creadores genuinos a expandir la comunidad. Gana reputación cuando colaboren legítimamente.
+              {t('invitations.subtitle')}
             </p>
           </div>
         </div>
@@ -124,7 +126,7 @@ export const InvitationsView: React.FC = () => {
           className="px-4 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
         >
           <Share2 className="w-4 h-4" />
-          <span>Compartir Enlace</span>
+          <span>{t('invitations.share_button')}</span>
         </button>
       </div>
 
@@ -133,13 +135,13 @@ export const InvitationsView: React.FC = () => {
         <div className="relative z-10 space-y-6">
           <div className="max-w-xl">
             <span className="text-[11px] font-bold uppercase tracking-wider text-teal-300 bg-teal-900/60 px-3 py-1 rounded-full border border-teal-700/50">
-              Tu Identificador de Invitación
+              {t('invitations.title')}
             </span>
             <h3 className="text-2xl font-black mt-3">
-              Comparte tu enlace de invitación personal
+              {t('invitations.your_link_label')}
             </h3>
             <p className="text-xs text-slate-300 mt-1">
-              Cada nuevo creador que se registre con tu código quedará vinculado a tu red de colaboradores comunitarios.
+              {t('invitations.bonus_explanation')}
             </p>
           </div>
 
@@ -148,7 +150,7 @@ export const InvitationsView: React.FC = () => {
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col justify-between">
               <div>
                 <div className="text-[11px] font-bold text-slate-300 uppercase">
-                  Código de Invitación
+                  {t('invitations.your_code_label')}
                 </div>
                 <div className="text-xl font-black font-mono tracking-wider text-amber-300 mt-1">
                   {inviteCode}
@@ -159,7 +161,7 @@ export const InvitationsView: React.FC = () => {
                 className="mt-3 w-full py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedCode ? '¡Código Copiado!' : 'Copiar Código'}</span>
+                <span>{copiedCode ? t('invitations.copied_alert') : t('invitations.copy_code_button')}</span>
               </button>
             </div>
 
@@ -167,7 +169,7 @@ export const InvitationsView: React.FC = () => {
             <div className="md:col-span-2 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col justify-between">
               <div>
                 <div className="text-[11px] font-bold text-slate-300 uppercase">
-                  Enlace Directo para Registro
+                  {t('invitations.your_link_label')}
                 </div>
                 <div className="text-xs font-mono text-slate-200 truncate mt-1 bg-black/30 px-3 py-2 rounded-xl">
                   {inviteUrl}
@@ -179,7 +181,7 @@ export const InvitationsView: React.FC = () => {
                   className="flex-1 py-2 px-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-900 font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedLink ? '¡Enlace Copiado!' : 'Copiar Enlace'}</span>
+                  <span>{copiedLink ? t('invitations.copied_alert') : t('invitations.copy_link_button')}</span>
                 </button>
 
                 {/* Social Share Shortcuts */}
@@ -188,7 +190,7 @@ export const InvitationsView: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all"
-                  title="Compartir por WhatsApp"
+                  title="WhatsApp"
                 >
                   <MessageCircle className="w-4 h-4" />
                 </a>
@@ -197,7 +199,7 @@ export const InvitationsView: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition-all"
-                  title="Compartir por Telegram"
+                  title="Telegram"
                 >
                   <Send className="w-4 h-4" />
                 </a>
@@ -206,7 +208,7 @@ export const InvitationsView: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all"
-                  title="Compartir por Facebook"
+                  title="Facebook"
                 >
                   <Facebook className="w-4 h-4" />
                 </a>
@@ -215,7 +217,7 @@ export const InvitationsView: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white transition-all"
-                  title="Compartir por X"
+                  title="X"
                 >
                   <Twitter className="w-4 h-4" />
                 </a>
@@ -230,63 +232,42 @@ export const InvitationsView: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm text-center">
           <div className="text-3xl font-black text-slate-900">{totalRegistered}</div>
           <div className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-            Creadores Registrados
+            {t('invitations.stat_total_invited')}
           </div>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm text-center">
           <div className="text-3xl font-black text-teal-600">{totalVerified}</div>
           <div className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-            Invitados Validados
+            {t('invitations.stat_verified')}
           </div>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm text-center">
           <div className="text-3xl font-black text-amber-500">+{totalReputationEarned.toFixed(1)}</div>
           <div className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-            Reputación Obtenida
+            {t('invitations.stat_reputation_earned')}
           </div>
-        </div>
-      </div>
-
-      {/* Anti-Fraud Rules Banner */}
-      <div className="bg-sky-50 rounded-3xl p-5 sm:p-6 border border-sky-200 text-sky-950 flex items-start gap-4">
-        <ShieldCheck className="w-6 h-6 text-sky-600 shrink-0 mt-1" />
-        <div className="space-y-1 text-xs">
-          <h4 className="font-extrabold text-sm text-sky-900">
-            Reglas de Seguridad y Prevención de Abuso
-          </h4>
-          <ul className="list-disc pl-4 space-y-1 text-sky-800">
-            <li>
-              <strong>Cero auto-invitaciones:</strong> El sistema bloquea automáticamente invitaciones a tus propios correos o dispositivos.
-            </li>
-            <li>
-              <strong>Puntos por mérito genuino:</strong> La reputación de invitación se acredita una vez que el invitado complete su primera verificación de apoyo legítimo.
-            </li>
-            <li>
-              <strong>Límites comunitarios:</strong> Se aplican topes diarios de invitaciones para mantener la calidad y el espíritu humano de la plataforma.
-            </li>
-          </ul>
         </div>
       </div>
 
       {/* Invitations History Table */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-4">
         <h3 className="font-extrabold text-slate-900 text-base">
-          Historial de Miembros Invitados
+          {t('invitations.invited_users_title')}
         </h3>
 
         {isLoading ? (
           <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
-            <span>Cargando invitaciones registradas...</span>
+            <span>{t('common.loading')}</span>
           </div>
         ) : invitations.length === 0 ? (
           <div className="py-12 text-center text-slate-400 text-xs">
             <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-            <p className="font-bold text-slate-600">Aún no tienes invitados registrados</p>
+            <p className="font-bold text-slate-600">{t('invitations.no_invitations')}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Comparte tu enlace o código para que nuevos creadores comiencen a colaborar.
+              {t('invitations.bonus_explanation')}
             </p>
           </div>
         ) : (
@@ -294,17 +275,17 @@ export const InvitationsView: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
                 <tr>
-                  <th className="p-3 rounded-l-xl">Fecha</th>
-                  <th className="p-3">Código</th>
-                  <th className="p-3">Estado</th>
-                  <th className="p-3 rounded-r-xl text-right">Reputación</th>
+                  <th className="p-3 rounded-l-xl">{t('common.created_at')}</th>
+                  <th className="p-3">{t('invitations.your_code_label')}</th>
+                  <th className="p-3">{t('common.status')}</th>
+                  <th className="p-3 rounded-r-xl text-right">{t('ranking.score_header')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {invitations.map((inv) => (
                   <tr key={inv.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="p-3 font-medium text-slate-600">
-                      {new Date(inv.created_at).toLocaleDateString()}
+                      {formatDate(inv.created_at)}
                     </td>
                     <td className="p-3 font-mono font-bold text-slate-800">
                       {inv.invite_code}
@@ -320,11 +301,11 @@ export const InvitationsView: React.FC = () => {
                         }`}
                       >
                         {inv.status === 'verified'
-                          ? 'Validado'
+                          ? t('common.verified')
                           : inv.status === 'registered'
-                          ? 'Registrado'
+                          ? t('invitations.status_pending')
                           : inv.status === 'active'
-                          ? 'Activo'
+                          ? t('invitations.status_active')
                           : inv.status}
                       </span>
                     </td>
